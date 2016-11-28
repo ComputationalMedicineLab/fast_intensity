@@ -2,6 +2,8 @@ import numpy as np
 cimport numpy as np
 
 def fast_hist(x, edges):
+    # fast_hist Returns density of elements x in bins defined by edges.
+    # Assumes x and edges are sorted, and edges(1) < x < edges(end)
     cdef np.ndarray density = np.zeros(len(edges) - 1, dtype=np.float)
     cdef int n = len(x)
     cdef int i = 0

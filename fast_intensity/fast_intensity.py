@@ -1,11 +1,12 @@
 import numpy as np
 import numpy.random as npr
 
+# Import and compile Cython files
 import pyximport
-pyximport.install(setup_args={"include_dirs":np.get_include()})
+pyximport.install(setup_args={"include_dirs": np.get_include()})
 
-from stair_step import stair_step
-from fast_hist import fast_hist
+from fast_intensity.stair_step import stair_step
+from fast_intensity.fast_hist import fast_hist
 
 # events = [-1,1937,1939,1945,1979,1986,2026,2029,2189,2211,2212,2213,2214,2216,
 #           2226,2238,2240,2243,2247,2279,2364,2369,2380,2408,2412,2413,2420,2450,
