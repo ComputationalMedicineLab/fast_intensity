@@ -12,6 +12,7 @@
 *.egg-info
 build
 eggs
+.eggs
 parts
 bin
 var
