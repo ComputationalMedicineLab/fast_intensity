@@ -10,12 +10,6 @@ pyximport.install(setup_args={"include_dirs": np.get_include()})
 from .stair_step import stair_step
 from .fast_hist import fast_hist
 
-# events = [-1,1937,1939,1945,1979,1986,2026,2029,2189,2211,2212,2213,2214,2216,
-#           2226,2238,2240,2243,2247,2279,2364,2369,2380,2408,2412,2413,2420,2450,
-#           2457,2541,2590,2642,2672,2701,2803,2971,3010,3153,3295,3336,3395,3625,
-#           3659,3723,3766,3876,4011,4240]
-#
-
 class FastIntensity(object):
     """Generate event intensity curves.
 
@@ -118,7 +112,7 @@ class FastIntensity(object):
                 points (default 1/365)
             resolution (numeric): resolution for bin edges (default 1)
             date_format (string): format of dates in the input (same as used
-                in datetime.datetime.strptime() function) 
+                in datetime.datetime.strptime() function)
         """
         start_date = datetime.strptime(start_date, date_format)
         end_date = datetime.strptime(end_date, date_format)
