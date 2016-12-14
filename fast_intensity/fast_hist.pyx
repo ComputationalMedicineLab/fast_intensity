@@ -2,8 +2,19 @@ import numpy as np
 cimport numpy as np
 
 def fast_hist(x, edges):
-    # fast_hist Returns density of elements x in bins defined by edges.
-    # Assumes x and edges are sorted, and edges(1) < x < edges(end)
+    """
+    Return density histogram.
+
+    Calculates density of elements x in bins defined by edges. Assumes values
+    and edges are sorted, and edges[0] < x < edges[-1]
+
+    Args:
+        x (list or np.array of numbers): values
+        edges (list or np.array of numbers): bin edges (2 or more values)
+
+    Returns:
+        np.array of density histogram (float)
+    """
     cdef np.ndarray density = np.zeros(len(edges) - 1, dtype=np.float)
     cdef int n = len(x)
     cdef int i = 0
