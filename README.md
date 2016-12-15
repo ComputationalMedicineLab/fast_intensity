@@ -1,13 +1,13 @@
 fast-intensity
 ===============================
 
-version number: 0.0.1
-author: Jacek Bajor
+version number: 0.1
+author: Thomas A. Lasko, Jacek Bajor
 
 Overview
 --------
 
-Fast density inference
+Fast density inference.
 
 Installation / Usage
 --------------------
@@ -19,9 +19,9 @@ To install use pip:
 
 Or clone the repo:
 
-    $ git clone https://github.com/jbajor/fast-intensity.git
+    $ git clone https://github.com/ComputationalMedicineLab/fast-intensity.git
     $ python setup.py install
-    
+
 Contributing
 ------------
 

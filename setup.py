@@ -7,7 +7,7 @@ from os import path
 from Cython.Build import cythonize
 import numpy as np
 
-__version__ = '0.0.1'
+__version__ = '0.1'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -34,8 +34,8 @@ setup(
     version=__version__,
     description='Fast density inference',
     long_description=long_description,
-    url='https://github.com/jbajor/fast-intensity',
-    download_url='https://github.com/jbajor/fast-intensity/tarball/' + __version__,
+    url='https://github.com/ComputationalMedicineLab/fast-intensity',
+    download_url='https://github.com/ComputationalMedicineLab/fast-intensity/tarball/' + __version__,
     license='BSD',
     classifiers=[
       'Development Status :: 3 - Alpha',
@@ -45,7 +45,7 @@ setup(
     keywords='',
     packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
-    author='Jacek Bajor',
+    author='Thomas A. Lasko, Jacek Bajor',
     install_requires=install_requires,
     dependency_links=dependency_links,
     author_email='jacek.m.bajor@vanderbilt.edu',
