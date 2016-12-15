@@ -39,3 +39,6 @@ docs/_build
 
 # Cookiecutter
 output/
+
+# Cython intermediate files
+fast_intensity/*.c
