@@ -1,6 +1,6 @@
-# Core requirements 
+# Core requirements
 numpy
-cython
+Cython
 # Dev/Deployment
 sphinx
 sphinx_rtd_theme
