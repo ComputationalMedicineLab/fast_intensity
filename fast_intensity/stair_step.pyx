@@ -21,7 +21,7 @@ def stair_step(x, y, xp, yp):
     cdef int i = 0
 
     while j < n and xp[j] < x[i]:
-        yp[j] = np.nan
+        yp[j] = 0
         j += 1
 
     while j < n and i < m:
