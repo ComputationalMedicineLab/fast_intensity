@@ -71,6 +71,12 @@ class FastIntensity(object):
                 points (default 1/365)
             resolution (numeric): resolution for bin edges (default 1)
         """
+        # Convert to numpy array
+        events = np.array(events)
+        # Cut out of bounds events
+        events = np.delete(events, np.where(events <= start_event))
+        events = np.delete(events, np.where(events >= end_event))
+
         events_with_endpoints = np.zeros(len(events) + 2)
         events_with_endpoints[0] = start_event
         events_with_endpoints[-1] = end_event
@@ -91,9 +97,10 @@ class FastIntensity(object):
                 points (default 1/365)
             resolution (numeric): resolution for bin edges (default 1)
         """
-        events_with_endpoints = FastIntensity.convert_dates_to_events_with_endpoints(
-                                    dates, start_date, end_date)
-        return cls(events_with_endpoints, density, resolution)
+        events, start_e, end_e = FastIntensity.convert_dates_to_events(dates,
+                                    start_date, end_date)
+
+        return cls.from_events(events, start_e, end_e, density, resolution)
 
     @classmethod
     def from_string_dates(cls, dates, start_date, end_date, density=0.00274,
@@ -117,9 +124,10 @@ class FastIntensity(object):
         start_date = datetime.strptime(start_date, date_format)
         end_date = datetime.strptime(end_date, date_format)
         dates = [ datetime.strptime(d, date_format) for d in dates]
-        events_with_endp = FastIntensity.convert_dates_to_events_with_endpoints(
-            dates, start_date, end_date)
-        return cls(events_with_endp, density, resolution)
+        events, start_e, end_e = FastIntensity.convert_dates_to_events(dates,
+                                    start_date, end_date)
+
+        return cls.from_events(events, start_e, end_e, density, resolution)
 
     @staticmethod
     def time_delta_in_days(a, b):
@@ -132,28 +140,24 @@ class FastIntensity(object):
         Returns:
             float: time difference in days (exact, not rounded)
         """
-        return abs((a-b).total_seconds()/(24*60*60))
+        return (a-b).total_seconds()/(24*60*60)
 
     @staticmethod
-    def convert_dates_to_events_with_endpoints(dates, start_date,
-                                               end_date):
+    def convert_dates_to_events(dates, start_date, end_date):
         """
-        Convert dates to events with endpoints.
+        Convert dates to events.
 
         Args:
             dates (list or np.array of date/datetime)
             start_event (date/datetime)
-            end_event (date/datetime)
 
         Returns:
-            list of numbers representing events with endpoints
+            list of numbers representing events
         """
-        events = np.zeros(len(dates) + 2)
-        events[0] = -1
-        events[-1] = FastIntensity.time_delta_in_days(end_date, start_date) + 1
+        events = np.zeros(len(dates))
         for i, d in enumerate(dates):
-            events[i+1] = FastIntensity.time_delta_in_days(d, start_date)
-        return events
+            events[i] = FastIntensity.time_delta_in_days(d, start_date)
+        return events, 0, FastIntensity.time_delta_in_days(end_date, start_date)
 
     def run_inference(self, iterations=100):
         """
