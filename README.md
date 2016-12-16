@@ -85,5 +85,4 @@ fig.autofmt_xdate()
 plt.show()
 ```
 
-The figure generated with the code:
 ![figure](https://github.com/ComputationalMedicineLab/fast_intensity/raw/master/intensity_figure.png "Figure")
