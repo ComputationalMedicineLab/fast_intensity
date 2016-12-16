@@ -48,6 +48,15 @@ class TestFastIntensity(unittest.TestCase):
         npt.assert_array_equal(fi_1.events_with_endpoints,
                                fi_2.events_with_endpoints)
 
+    def test_events_are_cut_if_out_of_bounds(self):
+        events = [1937,1939,1945,1979,1986,2026,2029,2189,2211,2212,2213,2214]
+        start_event = 2000
+        end_event = 2200
+        expected_events_wt = [2000,2026,2029,2189,2200]
+
+        fi = FastIntensity.from_events(events, start_event, end_event)
+        npt.assert_array_equal(fi.events_with_endpoints, expected_events_wt)
+
     def test_accepts_date_as_input(self):
         start_date = dt.date(2000, 1, 1)
         end_date = dt.date(2000, 3, 1)
@@ -61,6 +70,18 @@ class TestFastIntensity(unittest.TestCase):
         fi = FastIntensity.from_dates(self.date_times, start_date, end_date)
         res = fi.run_inference(5)
         self.assertTrue((res >= 0).all())
+
+    def test_dates_are_cut_if_out_of_bounds(self):
+        self.dates = [dt.date(2000, 1, 2), dt.date(2000, 1, 10),
+                      dt.date(2000, 1, 15), dt.date(2000, 2, 1),
+                      dt.date(2000, 2, 8), dt.date(2000, 2, 10)]
+
+        start_date = dt.date(2000, 1, 5)
+        end_date = dt.date(2000, 2, 5)
+        expected_events_wt = [0, 5, 10, 27, 31]
+
+        fi = FastIntensity.from_dates(self.dates, start_date, end_date)
+        npt.assert_array_equal(fi.events_with_endpoints, expected_events_wt)
 
     def test_accepts_date_string_as_input(self):
         date_format = '%Y-%m-%d'
@@ -86,7 +107,19 @@ class TestFastIntensity(unittest.TestCase):
         end_date = '2010-11-08 00:00:00'
         date_time_strings = ['1999-04-01 00:00:00', '2003-08-18 00:00:00',
                              '2010-10-20 00:00:00', '2010-11-08 00:00:00']
-        expected_events_wt = [-1, 0, 1600, 4220, 4239, 4240]
+        expected_events_wt = [0, 1600, 4220, 4239]
+
+        fi = FastIntensity.from_string_dates(date_time_strings, start_date,
+                                             end_date, date_format=date_format)
+
+        npt.assert_array_equal(fi.events_with_endpoints, expected_events_wt)
+
+    def test_converts_dates_and_adds_endoints_correctly(self):
+        date_format = '%Y-%m-%d'
+        start_date = '1999-03-31'
+        end_date = '2010-11-10'
+        date_time_strings = ['1999-04-01', '2003-08-18', '2010-10-20', '2010-11-08']
+        expected_events_wt = [0, 1, 1601, 4221, 4240, 4242]
 
         fi = FastIntensity.from_string_dates(date_time_strings, start_date,
                                              end_date, date_format=date_format)

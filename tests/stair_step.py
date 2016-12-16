@@ -48,7 +48,7 @@ class TestStairStepFunction(unittest.TestCase):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
         x_new = [0, 0.5]
-        expected_y = [np.nan, np.nan]
+        expected_y = [0, 0]
         npt.assert_array_equal(stair_step(x, y, x_new, [None, None]), expected_y)
 
 if __name__ == '__main__':
