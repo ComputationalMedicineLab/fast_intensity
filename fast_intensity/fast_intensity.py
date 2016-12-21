@@ -11,7 +11,16 @@ from .stair_step import stair_step
 from .fast_hist import fast_hist
 
 class FastIntensity(object):
-    """Generate event intensity curves.
+    """Estimates (potentially nonstationary) event intensity vs. time.
+    
+    This class uses Completely Random Average Shifted Histograms (CRASH) to compute a continuous curve of event 
+    intensity vs. time, as described in ** Citation TBD **.
+        
+    Each histogram is defined by a random number of bin edges, with the location of each bin edge
+    sampled uniformly at random between event *indices* (not their locations). For example, with the sequence of events 
+    [1, 2, 100], there is the same probability that an edge will appear between 1 and 2 as between 2 and 100.
+    This allows for the final density estimation to adapt its 'bandwidth' to the nonstationarity of event locations.
+    The smoothness and resolution of the resulting curves can be set.
 
     Usage:
         events = [10, 15, 16, 17, 28]
@@ -40,18 +49,18 @@ class FastIntensity(object):
 
     def __init__(self, events_with_endpoints, density=0.00274, resolution=1):
         """
-        Initialize FastIntensity with events with endpoints.
+        Initialize with endpoints included as the first and last element of events_with_endpoints.
 
-        To initialize with events without endpoints provided, but with start
-        event and event use from_events method. To initialize with dates or
-        dates in strings use from_dates or from_string_dates respectively.
-
+        This is the most direct, but least convenient or intuitive initialization. 
+        
         Args:
             events_with_endpoints (list or np.array of numeric values):
-                events with end points (first and last element)
+                event times in units of days since an arbitrary reference point (often the first event). 
+                The first and last elements define the time range over which the curves are computed, 
+                and are not counted as events themselves.
             density (numeric): average number of bin edges between neighboring
-                points (default 1/365)
-            resolution (numeric): resolution for bin edges (default 1)
+                points (default 1/365).
+            resolution (numeric): resolution for bin edges in units of days (default 1).
         """
         self.events_with_endpoints = events_with_endpoints
         self.density = density
