@@ -177,7 +177,6 @@ class FastIntensity(object):
         events = self.events_with_endpoints[1:-1]
 
         nx = int(np.round((b - a) / resolution))
-        a = np.floor(b - nx * resolution)
 
         grid = np.linspace(a, b, nx)
         meanvals = np.zeros(nx)
@@ -186,38 +185,32 @@ class FastIntensity(object):
         n = len(self.events_with_endpoints) - 1
         num_edges = int(2 + np.max([2, np.ceil(density * n)]))
 
-        edges = np.zeros(num_edges)
-        edges[0] = a
-        edges[-1] = b
-
         for i in range(iterations):
-            edges = self.randomize_edges(self.events_with_endpoints, edges,
-                density, resolution)
+            edges = self.randomize_edges(num_edges, density, resolution)
             h = fast_hist(events, edges)
             vals = stair_step(edges, h, grid, vals)
             meanvals = meanvals + (vals - meanvals)/(i+1)
 
         return meanvals
 
-    def randomize_edges(self, x, y, density, resolution):
+    def randomize_edges(self, num_edges, density, resolution):
         """
         Randomize bin edges for histogram.
-
-        Args:
-            x (array-like of numbers): collection of events
-            y (array-like of numbers): previous edges
 
         Returns:
             np.array of new bin edges
         """
-        n = len(x) - 1
+        n = len(self.events_with_endpoints) - 1
         w = n * npr.rand(int(np.max([2, np.ceil(density * n)])))
         w.sort()
 
-        y[0] = x[0]
-        y[-1] = x[-1]
+        y = np.zeros(num_edges)
 
-        y[1:-1] = np.interp(w, np.linspace(0, n, n+1), x)
+        y[0] = self.events_with_endpoints[0]
+        y[-1] = self.events_with_endpoints[-1]
+
+        y[1:-1] = np.interp(w, np.linspace(0, n, n+1),
+                            self.events_with_endpoints)
 
         y = np.array(y)
         y = np.round(y/resolution)*resolution
