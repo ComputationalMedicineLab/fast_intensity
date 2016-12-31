@@ -12,15 +12,18 @@ from .fast_hist import fast_hist
 
 class FastIntensity(object):
     """Estimates (potentially nonstationary) event intensity vs. time.
-    
-    This class uses Completely Random Average Shifted Histograms (CRASH) to compute a continuous curve of event 
-    intensity vs. time, as described in ** Citation TBD **.
-        
-    Each histogram is defined by a random number of bin edges, with the location of each bin edge
-    sampled uniformly at random between event *indices* (not their locations). For example, with the sequence of events 
-    [1, 2, 100], there is the same probability that an edge will appear between 1 and 2 as between 2 and 100.
-    This allows for the final density estimation to adapt its 'bandwidth' to the nonstationarity of event locations.
-    The smoothness and resolution of the resulting curves can be set.
+
+    This class uses Completely Random Average Shifted Histograms (CRASH) to
+    compute a continuous curve of event  intensity vs. time, as described in **
+    Citation TBD **.
+
+    Each histogram is defined by a random number of bin edges, with the location
+    of each bin edge  sampled uniformly at random between event *indices* (not
+    their locations). For example, with the sequence of events  [1, 2, 100],
+    there is the same probability that an edge will appear between 1 and 2 as
+    between 2 and 100.  This allows for the final density estimation to adapt
+    its 'bandwidth' to the nonstationarity of event locations.  The smoothness
+    and resolution of the resulting curves can be set.
 
     Usage:
         events = [10, 15, 16, 17, 28]
@@ -49,18 +52,21 @@ class FastIntensity(object):
 
     def __init__(self, events_with_endpoints, density=0.00274, resolution=1):
         """
-        Initialize with endpoints included as the first and last element of events_with_endpoints.
+        Initialize with endpoints included as the first and last element of
+        events_with_endpoints.
 
-        This is the most direct, but least convenient or intuitive initialization. 
-        
+        This is the most direct, but least convenient or intuitive
+        initialization.
+
         Args:
-            events_with_endpoints (list or np.array of numeric values):
-                event times in units of days since an arbitrary reference point (often the first event). 
-                The first and last elements define the time range over which the curves are computed, 
-                and are not counted as events themselves.
-            density (numeric): average number of bin edges between neighboring
+            events_with_endpoints (array-like of numbers):
+                event times in units of days since an arbitrary reference point
+                (often the first event).  The first and last elements define the
+                time range over which the curves are computed,  and are not
+                counted as events themselves.
+            density (number): average number of bin edges between neighboring
                 points (default 1/365).
-            resolution (numeric): resolution for bin edges in units of days (default 1).
+            resolution (number): resolution for bin edges in units of days (default 1).
         """
         self.events_with_endpoints = events_with_endpoints
         self.density = density
@@ -73,12 +79,12 @@ class FastIntensity(object):
         Add endpoints and initialize an instance.
 
         Args:
-            events (list or np.array of numeric values)
-            start_event (numeric value)
-            end_event (numeric value)
-            density (numeric): average number of bin edges between neighboring
+            events (array-like of number)
+            start_event (number)
+            end_event (number)
+            density (number): average number of bin edges between neighboring
                 points (default 1/365)
-            resolution (numeric): resolution for bin edges (default 1)
+            resolution (number): resolution for bin edges (default 1)
         """
         # Convert to numpy array
         events = np.array(events)
@@ -99,12 +105,12 @@ class FastIntensity(object):
         Convert dates/datetimes to events and initialize an instance.
 
         Args:
-            dates (list or np.array of date/datetime)
+            dates (array-like of date/datetime)
             start_event (date/datetime)
             end_event (date/datetime)
-            density (numeric): average number of bin edges between neighboring
+            density (number): average number of bin edges between neighboring
                 points (default 1/365)
-            resolution (numeric): resolution for bin edges (default 1)
+            resolution (number): resolution for bin edges (default 1)
         """
         events, start_e, end_e = FastIntensity.convert_dates_to_events(dates,
                                     start_date, end_date)
@@ -118,15 +124,15 @@ class FastIntensity(object):
         Convert date strings to events and initialize an instance.
 
         Args:
-            dates (list or np.array of strings): dates represented by correctly
+            dates (array-like of strings): dates represented by correctly
                 formatted strings
             start_event (string): date represented by a correctly formatted
                 string
             end_event (string): date represented by a correctly formatted
                 string
-            density (numeric): average number of bin edges between neighboring
+            density (number): average number of bin edges between neighboring
                 points (default 1/365)
-            resolution (numeric): resolution for bin edges (default 1)
+            resolution (number): resolution for bin edges (default 1)
             date_format (string): format of dates in the input (same as used
                 in datetime.datetime.strptime() function)
         """
@@ -157,7 +163,7 @@ class FastIntensity(object):
         Convert dates to events.
 
         Args:
-            dates (list or np.array of date/datetime)
+            dates (array-like of date/datetime)
             start_event (date/datetime)
 
         Returns:
@@ -197,20 +203,20 @@ class FastIntensity(object):
         edges[-1] = b
 
         for i in range(iterations):
-            edges = self.draw_points(self.events_with_endpoints, edges)
+            edges = self.randomize_edges(self.events_with_endpoints, edges)
             h = fast_hist(events, edges)
             vals = stair_step(edges, h, grid, vals)
             meanvals = meanvals + (vals - meanvals)/(i+1)
 
         return meanvals
 
-    def draw_points(self, x, y):
+    def randomize_edges(self, x, y):
         """
         Randomize bin edges for histogram.
 
         Args:
-            x (list or np.array of numbers): collection of events
-            y (list or np.array of numbers): previous edges
+            x (array-like of numbers): collection of events
+            y (array-like of numbers): previous edges
 
         Returns:
             np.array of new bin edges

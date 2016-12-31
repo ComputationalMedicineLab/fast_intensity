@@ -9,8 +9,8 @@ def fast_hist(x, edges):
     and edges are sorted, and edges[0] < x < edges[-1]
 
     Args:
-        x (list or np.array of numbers): values
-        edges (list or np.array of numbers): bin edges (2 or more values)
+        x (array-like of numbers): values
+        edges (array-like of numbers): bin edges (2 or more values)
 
     Returns:
         np.array of density histogram (float)
@@ -19,10 +19,10 @@ def fast_hist(x, edges):
     cdef int n = len(x)
     cdef int i = 0
     cdef int j = 1
-    cdef int i_start = i
+    cdef int start = i
 
     while i < n:
-        i_start = i
+        start = i
 
         while x[i] > edges[j]:
             j = j + 1
@@ -30,6 +30,6 @@ def fast_hist(x, edges):
         while i < n and x[i] <= edges[j]:
             i = i + 1
 
-        density[j-1] = (i - i_start) / (edges[j] - edges[j - 1])
+        density[j-1] = (i - start) / (edges[j] - edges[j - 1])
 
     return density
