@@ -48,13 +48,14 @@ class FastIntensity(object):
 
     def __init__(self, events, start_event, end_event):
         """
-        Initialize an instance.
+        Initialize with events and the inference tune range expressed as day
+        numbers.
 
         Args:
-            events (array-like of number): event times in units of days since an
-                arbitrary reference point
-            start_event (number): beginning of a time range
-            end_event (number): end of a time range
+            events (array-like of real numbers): event times in units of days
+                since an arbitrary reference point.
+            start_event (number): beginning of the computed inference time range
+            end_event (number): end of the computed inference time range
         """
         # Convert to numpy array
         events = np.array(events)
@@ -65,6 +66,7 @@ class FastIntensity(object):
         self.events = events
         self.start = start_event
         self.end = end_event
+        self.grid = None
 
     @classmethod
     def from_dates(cls, dates, start_date, end_date):
@@ -135,6 +137,22 @@ class FastIntensity(object):
             events[i] = FastIntensity.time_delta_in_days(d, start_date)
         return events, 0, FastIntensity.time_delta_in_days(end_date, start_date)
 
+    def _generate_grid(self, resolution, density):
+        """
+        Generate grid for intensity (x-axis).
+
+        Args:
+            density (number): average number of bin edges between neighboring
+                points (default 1/365).
+            resolution (number): resolution for bin edges in units of days
+                (default 1).
+
+        Returns:
+            np.array of evenly spaced numerical values
+        """
+        grid_len = int(np.round((self.end - self.start) / resolution))
+        return np.linspace(self.start, self.end, grid_len)
+
     def run_inference(self, density=0.00274, resolution=1, iterations=100):
         """
         Run event intensity inference.
@@ -149,22 +167,17 @@ class FastIntensity(object):
         Returns
             np.array of event intensity
         """
-        a = self.start
-        b = self.end
+        self.grid = self._generate_grid(resolution, density)
 
-        nx = int(np.round((b - a) / resolution))
-
-        grid = np.linspace(a, b, nx)
-        meanvals = np.zeros(nx)
-
-        vals = np.zeros(len(grid))
+        meanvals = np.zeros(len(self.grid))
+        vals = np.zeros(len(self.grid))
         n = len(self.events) + 1
         num_edges = int(2 + np.max([2, np.ceil(density * n)]))
 
         for i in range(iterations):
             edges = self.randomize_edges(num_edges, density, resolution)
             h = fast_hist(self.events, edges)
-            vals = stair_step(edges, h, grid, vals)
+            vals = stair_step(edges, h, self.grid, vals)
             meanvals = meanvals + (vals - meanvals)/(i+1)
 
         return meanvals
