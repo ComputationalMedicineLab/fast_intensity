@@ -25,6 +25,14 @@ class FastIntensity(object):
     its 'bandwidth' to the nonstationarity of event locations.  The smoothness
     and resolution of the resulting curves can be set.
 
+    Instance variables:
+        events (array-like of real numbers): event times in units of days
+            since an arbitrary reference point
+        start (number): beginning of the computed inference time range
+        end (number): end of the computed inference time range
+        grid (np.array of real numbers): evenly spaced grid for intensity,
+            generated when run_inference() function is called
+
     Usage:
         events = [10, 15, 16, 17, 28]
 
@@ -53,7 +61,7 @@ class FastIntensity(object):
 
         Args:
             events (array-like of real numbers): event times in units of days
-                since an arbitrary reference point.
+                since an arbitrary reference point
             start_event (number): beginning of the computed inference time range
             end_event (number): end of the computed inference time range
         """
@@ -64,9 +72,14 @@ class FastIntensity(object):
         events = np.delete(events, np.where(events > end_event))
 
         self.events = events
+        """Event times in units of days since an arbitrary reference point."""
         self.start = start_event
+        """Beginning of the computed inference time range."""
         self.end = end_event
+        """End of the computed inference time range."""
         self.grid = None
+        """Evenly spaced grid for intensity, generated when run_inference()
+        function is called."""
 
     @classmethod
     def from_dates(cls, dates, start_date, end_date):
