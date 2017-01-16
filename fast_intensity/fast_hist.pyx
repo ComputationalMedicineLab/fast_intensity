@@ -1,7 +1,10 @@
 import numpy as np
 cimport numpy as np
 
-def fast_hist(x, edges):
+DTYPE = np.float
+ctypedef np.float_t DTYPE_t
+
+def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
     """
     Return density histogram.
 
@@ -9,8 +12,8 @@ def fast_hist(x, edges):
     and edges are sorted, and edges[0] < x < edges[-1]
 
     Args:
-        x (array-like of numbers): values
-        edges (array-like of numbers): bin edges (2 or more values)
+        x (np.array of np.float numbers): values
+        edges (np.array of np.float numbers): bin edges (2 or more values)
 
     Returns:
         np.array of density histogram (float)
