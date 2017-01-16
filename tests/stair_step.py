@@ -12,44 +12,50 @@ from fast_intensity.stair_step import stair_step
 
 class TestStairStepFunction(unittest.TestCase):
     def test_returns_correct_interpolation_for_increasing_vals(self):
-        x = [1, 2, 3, 4, 5]
-        y = [1, 2, 3, 4, 5]
-        x_new = [2.5, 4.5]
-        expected_y = [2, 4]
-        npt.assert_array_equal(stair_step(x, y, x_new, [None, None]), expected_y)
+        x = np.array([1, 2, 3, 4, 5], dtype=np.float)
+        y = np.array([1, 2, 3, 4, 5], dtype=np.float)
+        x_new = np.array([2.5, 4.5], dtype=np.float)
+        y_new = np.zeros(len(x_new), dtype=np.float)
+        expected_y = np.array([2, 4], dtype=np.float)
+        npt.assert_array_equal(stair_step(x, y, x_new, y_new), expected_y)
 
     def test_returns_correct_interpolation_for_decreasing_vals(self):
-        x = [1, 2, 3, 4, 5]
-        y = [5, 4, 3, 2, 1]
-        x_new = [2.5, 4.5]
-        expected_y = [4, 2]
-        npt.assert_array_equal(stair_step(x, y, x_new, [None, None]), expected_y)
+        x = np.array([1, 2, 3, 4, 5], dtype=np.float)
+        y = np.array([5, 4, 3, 2, 1], dtype=np.float)
+        x_new = np.array([2.5, 4.5], dtype=np.float)
+        y_new = np.zeros(len(x_new), dtype=np.float)
+        expected_y = np.array([4, 2], dtype=np.float)
+        npt.assert_array_equal(stair_step(x, y, x_new, y_new), expected_y)
 
     def test_raises_exception_when_x_unsorted(self):
-        x = [5, 1, 6, 2, 7]
-        y = [1, 2, 3, 4, 5]
-        x_new = [2.5, 4.5]
-        self.assertRaises(Exception, stair_step, (x, y, x_new, [None, None]))
+        x = np.array([5, 1, 6, 2, 7], dtype=np.float)
+        y = np.array([1, 2, 3, 4, 5], dtype=np.float)
+        x_new = np.array([2.5, 4.5], dtype=np.float)
+        y_new = np.zeros(len(x_new), dtype=np.float)
+        self.assertRaises(Exception, stair_step, (x, y, x_new, y_new))
 
     def test_raises_exception_when_x_and_y_different_length(self):
-        x = [1, 2, 3, 4]
-        y = [1, 2, 3, 4, 5, 6]
-        x_new = [2.5, 4.5]
-        self.assertRaises(Exception, stair_step, (x, y, x_new, [None, None]))
+        x = np.array([1, 2, 3, 4], dtype=np.float)
+        y = np.array([1, 2, 3, 4, 5, 6], dtype=np.float)
+        x_new = np.array([2.5, 4.5], dtype=np.float)
+        y_new = np.zeros(len(x_new), dtype=np.float)
+        self.assertRaises(Exception, stair_step, (x, y, x_new, y_new))
 
     def test_returns_correct_interpolation_for_right_out_of_bounds(self):
-        x = [1, 2, 3, 4, 5]
-        y = [5, 4, 3, 2, 1]
-        x_new = [5, 6]
-        expected_y = [1, 1]
-        npt.assert_array_equal(stair_step(x, y, x_new, [None, None]), expected_y)
+        x = np.array([1, 2, 3, 4, 5], dtype=np.float)
+        y = np.array([5, 4, 3, 2, 1], dtype=np.float)
+        x_new = np.array([5, 6], dtype=np.float)
+        y_new = np.zeros(len(x_new), dtype=np.float)
+        expected_y = np.array([1, 1], dtype=np.float)
+        npt.assert_array_equal(stair_step(x, y, x_new, y_new), expected_y)
 
     def test_returns_nan_for_left_out_of_bounds(self):
-        x = [1, 2, 3, 4, 5]
-        y = [5, 4, 3, 2, 1]
-        x_new = [0, 0.5]
-        expected_y = [0, 0]
-        npt.assert_array_equal(stair_step(x, y, x_new, [None, None]), expected_y)
+        x = np.array([1, 2, 3, 4, 5], dtype=np.float)
+        y = np.array([5, 4, 3, 2, 1], dtype=np.float)
+        x_new = np.array([0, 0.5], dtype=np.float)
+        y_new = np.zeros(len(x_new), dtype=np.float)
+        expected_y = np.array([0, 0], dtype=np.float)
+        npt.assert_array_equal(stair_step(x, y, x_new, y_new), expected_y)
 
 if __name__ == '__main__':
     unittest.main()
