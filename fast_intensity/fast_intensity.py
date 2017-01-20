@@ -10,24 +10,6 @@ pyximport.install(setup_args={"include_dirs": np.get_include()})
 from .stair_step import stair_step
 from .fast_hist import fast_hist
 
-#
-# def stair_step(x, y, xp, yp):
-#     """
-#     Previous neighbor interpolation.
-#
-#     Args:
-#         x (list or np.array of numbers): sample points
-#         y (list or np.array of numbers): sample values (same size as x)
-#         xp (list or np.array of numbers): query points
-#         yp (list or np.array of numbers): preallocated list or np.array for
-#             query values (same size as xp)
-#
-#     Returns:
-#         np.array of interpolated values (float)
-#     """
-#     y = np.concatenate( ([0], y))
-#     return y[[np.where(x <= p)[0].max() for p in xp]]
-
 
 class FastIntensity(object):
     """Estimates (potentially nonstationary) event intensity vs. time.
