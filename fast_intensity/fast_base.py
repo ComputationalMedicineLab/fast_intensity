@@ -1,0 +1,55 @@
+from datetime import datetime
+
+import numpy as np
+
+class FastBase(object):
+
+    def __init__(self, events, values, start_event, end_event):
+        pass
+
+    @staticmethod
+    def time_delta_in_days(a, b):
+        """
+        Return time difference in days.
+
+        Args:
+            a, b (date or datetime)
+
+        Returns:
+            float: time difference in days (exact, not rounded)
+        """
+        return (a-b).total_seconds()/(24*60*60)
+
+    @staticmethod
+    def convert_dates_to_events(dates, start_date, end_date):
+        """
+        Convert dates to events.
+
+        Args:
+            dates (array-like of date/datetime)
+            start_event (date/datetime)
+
+        Returns:
+            list of numbers representing events
+        """
+        events = np.zeros(len(dates))
+        for i, d in enumerate(dates):
+            events[i] = FastBase.time_delta_in_days(d, start_date)
+        return events, 0, FastBase.time_delta_in_days(end_date, start_date)
+
+    def _generate_grid(self, resolution, density):
+        """
+        Generate grid (x-axis).
+
+        Args:
+            density (number): average number of bin edges between neighboring
+                points (default 1/365).
+            resolution (number): resolution for bin edges in units of days
+                (default 1).
+
+        Returns:
+            np.array of evenly spaced numerical values
+        """
+        grid_len = int(np.round((self.end - self.start) / resolution))
+
+        return np.linspace(self.start, self.end, grid_len)
