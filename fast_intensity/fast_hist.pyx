@@ -9,7 +9,8 @@ def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
     Return density histogram.
 
     Calculates density of elements x in bins defined by edges. Assumes values
-    and edges are sorted, and edges[0] < x < edges[-1]
+    and edges are sorted, and edges[0] < x < edges[-1]. Behavior for unsorted
+    values is undefined.
 
     Args:
         x (np.array of np.float numbers): values
