@@ -182,6 +182,10 @@ class FastIntensity(object):
         n = len(self.events) + 1
         num_edges = int(2 + np.max([2, np.ceil(density * n)]))
 
+        self._interp_grid = np.linspace(0, n, n+1)
+        self._events_w_endpoints = np.concatenate(([self.start], self.events,
+                                                   [self.end]))
+
         for i in range(iterations):
             edges = self.randomize_edges(num_edges, density, resolution)
             h = fast_hist(self.events, edges)
@@ -206,10 +210,7 @@ class FastIntensity(object):
         y[0] = self.start
         y[-1] = self.end
 
-        events_w_endpoints = np.concatenate(([self.start], self.events,
-                                             [self.end]))
-
-        y[1:-1] = np.interp(w, np.linspace(0, n, n+1), events_w_endpoints)
+        y[1:-1] = np.interp(w, self._interp_grid, self._events_w_endpoints)
 
         y = np.array(y, dtype=np.float)
         y = np.round(y/resolution)*resolution
