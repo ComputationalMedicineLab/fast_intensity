@@ -10,10 +10,7 @@ from fast_intensity import FastIntensity
 
 class TestFastIntensity(unittest.TestCase):
     def setUp(self):
-        self.events = [1937,1939,1945,1979,1986,2026,2029,2189,2211,2212,2213,
-            2214,2216,2226,2238,2240,2243,2247,2279,2364,2369,2380,2408,2412,
-            2413,2420,2450,2457,2541,2590,2642,2672,2701,2803,2971,3010,3153,
-            3295,3336,3395,3625,3659,3723,3766,3876,4011]
+        self.events = [1937, 2279, 2364, 3876, 4011]
         self.start = -1
         self.end = 4240
         self.dates = [dt.date(2000, 1, 2), dt.date(2000, 1, 10),
@@ -98,18 +95,6 @@ class TestFastIntensity(unittest.TestCase):
         date_time_strings = ['1999-04-01 00:00:00', '2003-08-18 00:00:00',
                              '2010-10-20 00:00:00', '2010-11-08 00:00:00']
         expected_events = [0, 1600, 4220, 4239]
-
-        fi = FastIntensity.from_string_dates(date_time_strings, start_date,
-                                             end_date, date_format=date_format)
-
-        npt.assert_array_equal(fi.events, expected_events)
-
-    def test_converts_dates_and_adds_endoints_correctly(self):
-        date_format = '%Y-%m-%d'
-        start_date = '1999-03-31'
-        end_date = '2010-11-10'
-        date_time_strings = ['1999-04-01', '2003-08-18', '2010-10-20', '2010-11-08']
-        expected_events = [1, 1601, 4221, 4240]
 
         fi = FastIntensity.from_string_dates(date_time_strings, start_date,
                                              end_date, date_format=date_format)
