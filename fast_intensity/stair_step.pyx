@@ -7,10 +7,10 @@ ctypedef np.float_t DTYPE_t
 def stair_step(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] y,
                np.ndarray[DTYPE_t, ndim=1] xp, np.ndarray[DTYPE_t, ndim=1] yp):
     """
-    Previous neighbor interpolation.
+    Previous neighbor interpolation. Behavoir undefined for unsorted points.
 
     Args:
-        x (np.array of np.float numbers): sample points
+        x (np.array of np.float numbers): sample points, sorted.
         y (np.array of np.float numbers): sample values (same size as x)
         xp (np.array of np.float numbers): query points
         yp (np.array of np.float numbers): preallocated list or np.array for
