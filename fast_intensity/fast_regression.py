@@ -8,7 +8,7 @@ from scipy.interpolate import pchip_interpolate
 class FastRegression(FastBase):
     """Estimates values over time.
 
-    Instance variables:
+    Attributes:
         events (array-like of real numbers): event times in units of days
             since an arbitrary reference point
         values (array-like of real numbers): values for each event time
@@ -69,16 +69,10 @@ class FastRegression(FastBase):
         events = np.delete(events, np.where(events > end_event))
 
         self.events = events
-        """Event times in units of days since an arbitrary reference point."""
         self.values = values
-        """Event values."""
         self.start = start_event
-        """Beginning of the computed inference time range."""
         self.end = end_event
-        """End of the computed inference time range."""
         self.grid = None
-        """Evenly spaced grid for intensity, generated when run_inference()
-        function is called."""
 
     @classmethod
     def from_dates(cls, dates, values, start_date, end_date):
