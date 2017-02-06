@@ -26,7 +26,7 @@ class FastIntensity(object):
     its 'bandwidth' to the nonstationarity of event locations.  The smoothness
     and resolution of the resulting curves can be set.
 
-    Instance variables:
+    Attributes:
         events (array-like of real numbers): event times in units of days
             since an arbitrary reference point
         start (number): beginning of the computed inference time range
@@ -37,7 +37,7 @@ class FastIntensity(object):
     Usage:
         events = [10, 15, 16, 17, 28]
 
-        fi = FastIntensity(events, start_event=0, end_event=35)
+        fi = FastIntensity(events, start_time=0, end_time=35)
         intensity = fi.run_inference()
 
         dates = [dt.datetime(2000, 1, 2), dt.datetime(2000, 1, 10),
@@ -55,7 +55,7 @@ class FastIntensity(object):
         intensity = fi.run_inference()
     """
 
-    def __init__(self, events, start_event, end_event):
+    def __init__(self, events, start_time, end_time):
         """
         Initialize with events and the inference tune range expressed as day
         numbers.
@@ -63,24 +63,18 @@ class FastIntensity(object):
         Args:
             events (array-like of real numbers): event times in units of days
                 since an arbitrary reference point
-            start_event (number): beginning of the computed inference time range
-            end_event (number): end of the computed inference time range
+            start_time (number): beginning of the computed inference time range
+            end_time (number): end of the computed inference time range
         """
-        # Convert to numpy array
         events = np.array(events, dtype=np.float)
         # Cut out of bounds events
-        events = np.delete(events, np.where(events < start_event))
-        events = np.delete(events, np.where(events > end_event))
+        events = np.delete(events, np.where(events < start_time))
+        events = np.delete(events, np.where(events > end_time))
 
         self.events = events
-        """Event times in units of days since an arbitrary reference point."""
-        self.start = start_event
-        """Beginning of the computed inference time range."""
-        self.end = end_event
-        """End of the computed inference time range."""
+        self.start = start_time
+        self.end = end_time
         self.grid = None
-        """Evenly spaced grid for intensity, generated when run_inference()
-        function is called."""
 
     @classmethod
     def from_dates(cls, dates, start_date, end_date):
@@ -89,8 +83,8 @@ class FastIntensity(object):
 
         Args:
             dates (array-like of date/datetime)
-            start_event (date/datetime)
-            end_event (date/datetime)
+            start_date (date/datetime)
+            end_date (date/datetime)
         """
         events, start_e, end_e = FastIntensity.convert_dates_to_events(dates,
                                     start_date, end_date)
@@ -106,9 +100,9 @@ class FastIntensity(object):
         Args:
             dates (array-like of strings): dates represented by correctly
                 formatted strings
-            start_event (string): date represented by a correctly formatted
+            start_date (string): date represented by a correctly formatted
                 string
-            end_event (string): date represented by a correctly formatted
+            end_date (string): date represented by a correctly formatted
                 string
             date_format (string): format of dates in the input (same as used
                 in datetime.datetime.strptime() function)
@@ -141,7 +135,7 @@ class FastIntensity(object):
 
         Args:
             dates (array-like of date/datetime)
-            start_event (date/datetime)
+            start_date (date/datetime)
 
         Returns:
             list of numbers representing events
