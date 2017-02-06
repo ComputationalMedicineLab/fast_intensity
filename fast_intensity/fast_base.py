@@ -4,9 +4,6 @@ import numpy as np
 
 class FastBase(object):
 
-    def __init__(self, events, values, start_event, end_event):
-        pass
-
     @staticmethod
     def time_delta_in_days(a, b):
         """
