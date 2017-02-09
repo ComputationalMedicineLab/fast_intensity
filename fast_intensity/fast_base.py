@@ -18,6 +18,14 @@ class FastBase(object):
         return (a-b).total_seconds()/(24*60*60)
 
     @staticmethod
+    def convert_string_dates_to_events(string_dates, start_date, end_date,
+                                       date_format='%Y-%m-%d %H:%M:%S'):
+        start_date = datetime.strptime(start_date, date_format)
+        end_date = datetime.strptime(end_date, date_format)
+        dates = [ datetime.strptime(d, date_format) for d in string_dates]
+        return FastBase.convert_dates_to_events(dates, start_date, end_date)
+
+    @staticmethod
     def convert_dates_to_events(dates, start_date, end_date):
         """
         Convert dates to events.

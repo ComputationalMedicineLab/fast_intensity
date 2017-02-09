@@ -108,11 +108,8 @@ class FastRegression(FastBase):
             date_format (string): format of dates in the input (same as used
                 in datetime.datetime.strptime() function)
         """
-        start_date = datetime.strptime(start_date, date_format)
-        end_date = datetime.strptime(end_date, date_format)
-        dates = [ datetime.strptime(d, date_format) for d in dates]
-        events, start_e, end_e = FastBase.convert_dates_to_events(dates,
-                                    start_date, end_date)
+        events, start_e, end_e = FastBase.convert_string_dates_to_events(dates,
+                                    start_date, end_date, date_format)
 
         return cls(events, values, start_e, end_e)
 
