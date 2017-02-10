@@ -10,6 +10,7 @@ pyximport.install(setup_args={"include_dirs": np.get_include()})
 from .stair_step import stair_step
 from .fast_hist import fast_hist
 
+
 class FastIntensity(object):
     """Estimates (potentially nonstationary) event intensity vs. time.
 
@@ -25,14 +26,18 @@ class FastIntensity(object):
     its 'bandwidth' to the nonstationarity of event locations.  The smoothness
     and resolution of the resulting curves can be set.
 
+    Attributes:
+        events (array-like of real numbers): event times in units of days
+            since an arbitrary reference point
+        start (number): beginning of the computed inference time range
+        end (number): end of the computed inference time range
+        grid (np.array of real numbers): evenly spaced grid for intensity,
+            generated when run_inference() function is called
+
     Usage:
         events = [10, 15, 16, 17, 28]
-        events_with_endpoints = [-1] + events + [35]
 
-        fi = FastIntensity(events_with_endpoints)
-        intensity = fi.run_inference()
-
-        fi = FastIntensity.from_events(events, start_event=-1, end_event=35)
+        fi = FastIntensity(events, start_time=0, end_time=35)
         intensity = fi.run_inference()
 
         dates = [dt.datetime(2000, 1, 2), dt.datetime(2000, 1, 10),
@@ -50,44 +55,26 @@ class FastIntensity(object):
         intensity = fi.run_inference()
     """
 
-    def __init__(self, events_with_endpoints):
+    def __init__(self, events, start_time, end_time):
         """
-        Initialize with endpoints included as the first and last element of
-        events_with_endpoints.
-
-        This is the most direct, but least convenient or intuitive
-        initialization.
+        Initialize with events and the inference tune range expressed as day
+        numbers.
 
         Args:
-            events_with_endpoints (array-like of numbers):
-                event times in units of days since an arbitrary reference point
-                (often the first event).  The first and last elements define the
-                time range over which the curves are computed,  and are not
-                counted as events themselves.
+            events (array-like of real numbers): event times in units of days
+                since an arbitrary reference point
+            start_time (number): beginning of the computed inference time range
+            end_time (number): end of the computed inference time range
         """
-        self.events_with_endpoints = events_with_endpoints
-
-    @classmethod
-    def from_events(cls, events, start_event, end_event):
-        """
-        Add endpoints and initialize an instance.
-
-        Args:
-            events (array-like of number)
-            start_event (number)
-            end_event (number)
-        """
-        # Convert to numpy array
-        events = np.array(events)
+        events = np.array(events, dtype=np.float)
         # Cut out of bounds events
-        events = np.delete(events, np.where(events <= start_event))
-        events = np.delete(events, np.where(events >= end_event))
+        events = np.delete(events, np.where(events < start_time))
+        events = np.delete(events, np.where(events > end_time))
 
-        events_with_endpoints = np.zeros(len(events) + 2)
-        events_with_endpoints[0] = start_event
-        events_with_endpoints[-1] = end_event
-        events_with_endpoints[1:-1] = events
-        return cls(events_with_endpoints)
+        self.events = events
+        self.start = start_time
+        self.end = end_time
+        self.grid = None
 
     @classmethod
     def from_dates(cls, dates, start_date, end_date):
@@ -96,13 +83,13 @@ class FastIntensity(object):
 
         Args:
             dates (array-like of date/datetime)
-            start_event (date/datetime)
-            end_event (date/datetime)
+            start_date (date/datetime)
+            end_date (date/datetime)
         """
         events, start_e, end_e = FastIntensity.convert_dates_to_events(dates,
                                     start_date, end_date)
 
-        return cls.from_events(events, start_e, end_e)
+        return cls(events, start_e, end_e)
 
     @classmethod
     def from_string_dates(cls, dates, start_date, end_date,
@@ -113,9 +100,9 @@ class FastIntensity(object):
         Args:
             dates (array-like of strings): dates represented by correctly
                 formatted strings
-            start_event (string): date represented by a correctly formatted
+            start_date (string): date represented by a correctly formatted
                 string
-            end_event (string): date represented by a correctly formatted
+            end_date (string): date represented by a correctly formatted
                 string
             date_format (string): format of dates in the input (same as used
                 in datetime.datetime.strptime() function)
@@ -126,7 +113,7 @@ class FastIntensity(object):
         events, start_e, end_e = FastIntensity.convert_dates_to_events(dates,
                                     start_date, end_date)
 
-        return cls.from_events(events, start_e, end_e)
+        return cls(events, start_e, end_e)
 
     @staticmethod
     def time_delta_in_days(a, b):
@@ -148,7 +135,7 @@ class FastIntensity(object):
 
         Args:
             dates (array-like of date/datetime)
-            start_event (date/datetime)
+            start_date (date/datetime)
 
         Returns:
             list of numbers representing events
@@ -157,6 +144,22 @@ class FastIntensity(object):
         for i, d in enumerate(dates):
             events[i] = FastIntensity.time_delta_in_days(d, start_date)
         return events, 0, FastIntensity.time_delta_in_days(end_date, start_date)
+
+    def _generate_grid(self, resolution, density):
+        """
+        Generate grid for intensity (x-axis).
+
+        Args:
+            density (number): average number of bin edges between neighboring
+                points (default 1/365).
+            resolution (number): resolution for bin edges in units of days
+                (default 1).
+
+        Returns:
+            np.array of evenly spaced numerical values
+        """
+        grid_len = int(np.round((self.end - self.start) / resolution))
+        return np.linspace(self.start, self.end, grid_len)
 
     def run_inference(self, density=0.00274, resolution=1, iterations=100):
         """
@@ -172,23 +175,21 @@ class FastIntensity(object):
         Returns
             np.array of event intensity
         """
-        a = self.events_with_endpoints[0]
-        b = self.events_with_endpoints[-1]
-        events = self.events_with_endpoints[1:-1]
+        self.grid = self._generate_grid(resolution, density)
 
-        nx = int(np.round((b - a) / resolution))
-
-        grid = np.linspace(a, b, nx)
-        meanvals = np.zeros(nx)
-
-        vals = np.zeros(len(grid))
-        n = len(self.events_with_endpoints) - 1
+        meanvals = np.zeros(len(self.grid))
+        vals = np.zeros(len(self.grid), dtype=np.float)
+        n = len(self.events) + 1
         num_edges = int(2 + np.max([2, np.ceil(density * n)]))
+
+        self._interp_grid = np.linspace(0, n, n+1)
+        self._events_w_endpoints = np.concatenate(([self.start], self.events,
+                                                   [self.end]))
 
         for i in range(iterations):
             edges = self.randomize_edges(num_edges, density, resolution)
-            h = fast_hist(events, edges)
-            vals = stair_step(edges, h, grid, vals)
+            h = fast_hist(self.events, edges)
+            vals = stair_step(edges, h, self.grid, vals)
             meanvals = meanvals + (vals - meanvals)/(i+1)
 
         return meanvals
@@ -200,18 +201,17 @@ class FastIntensity(object):
         Returns:
             np.array of new bin edges
         """
-        n = len(self.events_with_endpoints) - 1
+        n = len(self.events) + 1
         w = n * npr.rand(int(np.max([2, np.ceil(density * n)])))
         w.sort()
 
         y = np.zeros(num_edges)
 
-        y[0] = self.events_with_endpoints[0]
-        y[-1] = self.events_with_endpoints[-1]
+        y[0] = self.start
+        y[-1] = self.end
 
-        y[1:-1] = np.interp(w, np.linspace(0, n, n+1),
-                            self.events_with_endpoints)
+        y[1:-1] = np.interp(w, self._interp_grid, self._events_w_endpoints)
 
-        y = np.array(y)
+        y = np.array(y, dtype=np.float)
         y = np.round(y/resolution)*resolution
         return y

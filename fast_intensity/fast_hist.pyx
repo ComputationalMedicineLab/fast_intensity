@@ -1,16 +1,20 @@
 import numpy as np
 cimport numpy as np
 
-def fast_hist(x, edges):
+DTYPE = np.float
+ctypedef np.float_t DTYPE_t
+
+def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
     """
     Return density histogram.
 
     Calculates density of elements x in bins defined by edges. Assumes values
-    and edges are sorted, and edges[0] < x < edges[-1]
+    and edges are sorted, and edges[0] < x < edges[-1]. Behavior for unsorted
+    values is undefined.
 
     Args:
-        x (array-like of numbers): values
-        edges (array-like of numbers): bin edges (2 or more values)
+        x (np.array of np.float numbers): values
+        edges (np.array of np.float numbers): bin edges (2 or more values)
 
     Returns:
         np.array of density histogram (float)
