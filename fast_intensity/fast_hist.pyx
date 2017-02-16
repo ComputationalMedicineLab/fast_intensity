@@ -34,6 +34,9 @@ def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
         while i < n and x[i] <= edges[j]:
             i = i + 1
 
-        density[j-1] = (i - start) / (edges[j] - edges[j - 1])
+        edges_distance = (edges[j] - edges[j - 1])
+
+        if edges_distance != 0:
+            density[j-1] = (i - start) / edges_distance
 
     return density
