@@ -136,10 +136,15 @@ class TestFastRegression(unittest.TestCase):
         with self.assertRaises(ValueError):
             fr = FastRegression([], [], self.start, self.end)
 
-    def test_correct_value_for_one_event_value(self):
+    def test_constant_for_one_event_value(self):
         fr = FastRegression([200], [100], self.start, self.end)
-        res = fr.run_inference()
-        self.assertTrue((res == 100).all())
+        result = fr.run_inference()
+        self.assertTrue((result == 100).all())
+
+    def test_has_one_grid_point_for_equal_start_end_date(self):
+        fr = FastRegression([200], [100], 200, 200)
+        result = fr.run_inference()
+        npt.assert_array_equal(len(fr.grid), 1)
 
 if __name__ == '__main__':
     unittest.main()

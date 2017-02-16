@@ -117,11 +117,13 @@ class FastRegression(FastBase):
         """
         Interpolates between readings, extrapolates based on boundry values.
         """
-        f_event, f_value = ([grid[0]],[values[0]]) if grid[0] != events[0] else ([],[])
-        l_event, l_value = ([grid[-1]],[values[-1]]) if grid[-1] != events[-1] else ([],[])
 
-        events = np.concatenate((f_event, events, l_event))
-        values = np.concatenate((f_value, values, l_value))
+        if len(grid) > 1:
+            f_event, f_value = ([grid[0]],[values[0]]) if grid[0] != events[0] else ([],[])
+            l_event, l_value = ([grid[-1]],[values[-1]]) if grid[-1] != events[-1] else ([],[])
+            events = np.concatenate((f_event, events, l_event))
+            values = np.concatenate((f_value, values, l_value))
+
         return pchip_interpolate(events, values, grid)
 
     def run_inference(self, density=0.00274, resolution=1):

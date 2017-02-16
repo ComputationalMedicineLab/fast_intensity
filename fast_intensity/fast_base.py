@@ -55,6 +55,6 @@ class FastBase(object):
         Returns:
             np.array of evenly spaced numerical values
         """
-        grid_len = int(np.round((self.end - self.start) / resolution))
+        grid_len = np.max([int(np.round((self.end - self.start) / resolution)), 1])
 
         return np.linspace(self.start, self.end, grid_len)
