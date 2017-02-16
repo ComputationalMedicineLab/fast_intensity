@@ -101,5 +101,17 @@ class TestFastIntensity(unittest.TestCase):
 
         npt.assert_array_equal(fi.events, expected_events)
 
+    def test_accepts_npdatetime_as_input_and_converts_correctly(self):
+        dates = np.array([np.datetime64('1999-04-01'),
+                          np.datetime64('2003-08-18T00:00:00.000000000'),
+                          np.datetime64('2010-10-20T00:00:00'),
+                          np.datetime64('2010-11-08')])
+        start_date = np.datetime64('1999-04-01T00:00:00')
+        end_date = np.datetime64('2010-11-08T00:00:00')
+        expected_events = [0, 1600, 4220, 4239]
+
+        fi = FastIntensity.from_dates(dates, start_date, end_date)
+        npt.assert_array_equal(fi.events, expected_events)
+
 if __name__ == '__main__':
     unittest.main()

@@ -38,6 +38,16 @@ class FastBase(object):
             list of numbers representing events
         """
         events = np.zeros(len(dates))
+
+        if isinstance(dates, np.ndarray) and np.issubdtype(dates.dtype, np.datetime64):
+            dates = dates.astype('M8[s]').astype(datetime)
+
+        if np.issubdtype(type(start_date), np.datetime64):
+            start_date = start_date.astype('M8[s]').astype(datetime)
+
+        if np.issubdtype(type(end_date), np.datetime64):
+            end_date = end_date.astype('M8[s]').astype(datetime)
+
         for i, d in enumerate(dates):
             events[i] = FastBase.time_delta_in_days(d, start_date)
         return events, 0, FastBase.time_delta_in_days(end_date, start_date)
