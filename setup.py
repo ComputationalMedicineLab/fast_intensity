@@ -35,7 +35,7 @@ setup(
     description='Fast density inference',
     long_description=long_description,
     url='https://github.com/ComputationalMedicineLab/fast_intensity',
-    download_url='https://github.com/ComputationalMedicineLab/fast_intensity/tarball/' + __version__,
+    download_url='https://github.com/ComputationalMedicineLab/fast_intensity/tarball/v' + __version__,
     license='BSD',
     classifiers=[
       'Development Status :: 3 - Alpha',
