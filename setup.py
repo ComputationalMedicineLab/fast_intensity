@@ -2,7 +2,7 @@ from setuptools import setup, find_packages, Extension
 from codecs import open
 from os import path
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -17,7 +17,7 @@ with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
 install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
 dependency_links = [x.strip().replace('git+', '') for x in all_reqs if x.startswith('git+')]
 
-
+from Cython.Build import cythonize
 import numpy as np
 extensions = [
     Extension("fast_intensity/stair_step", ["fast_intensity/stair_step.pyx"],
@@ -49,5 +49,5 @@ setup(
     dependency_links=dependency_links,
     author_email='jacek.m.bajor@vanderbilt.edu',
     test_suite='tests',
-    ext_modules = extensions,
+    ext_modules = cythonize(extensions),
 )
