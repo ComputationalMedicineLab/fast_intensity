@@ -1,3 +1,5 @@
+# Copyright 2017 Thomas A. Lasko, Jacek Bajor
+
 from .fast_base import FastBase
 
 from datetime import datetime

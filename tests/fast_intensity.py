@@ -1,3 +1,5 @@
+# Copyright 2017 Thomas A. Lasko, Jacek Bajor
+
 import datetime as dt
 import unittest
 from unittest.mock import MagicMock

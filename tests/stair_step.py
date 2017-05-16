@@ -1,3 +1,5 @@
+# Copyright 2017 Thomas A. Lasko, Jacek Bajor
+
 import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch

@@ -1,3 +1,5 @@
+# Copyright 2017 Thomas A. Lasko, Jacek Bajor
+
 import numpy as np
 cimport numpy as np
 
