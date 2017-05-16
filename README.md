@@ -1,7 +1,7 @@
 fast-intensity
 ===============================
 
-version number: 0.1.3
+version number: 0.1.4
 
 authors: Thomas A. Lasko, Jacek Bajor
 
