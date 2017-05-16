@@ -1,7 +1,5 @@
-# Core requirements
 numpy
 Cython
-# Dev/Deployment
 sphinx
 sphinx_rtd_theme
 nose
