@@ -41,6 +41,8 @@ setup(
       'Development Status :: 3 - Alpha',
       'Intended Audience :: Developers',
       'Programming Language :: Python :: 3',
+      'License :: OSI Approved :: BSD License',
+      'Topic :: Scientific/Engineering :: Information Analysis',
     ],
     keywords='',
     packages=find_packages(exclude=['docs', 'tests*']),
