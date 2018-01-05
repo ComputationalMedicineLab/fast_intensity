@@ -36,97 +36,94 @@ class FastIntensity(FastBase):
             since an arbitrary reference point
         start (number): beginning of the computed inference time range
         end (number): end of the computed inference time range
-        grid (np.array of real numbers): evenly spaced grid for intensity,
-            generated when run_inference() function is called
+        grid (np.array of real numbers): evenly spaced timepoints at which the
+            curve is computed
 
     Usage:
         events = [10, 15, 16, 17, 28]
+        grid = np.arange(0, 50, 1)
 
-        fi = FastIntensity(events, start_time=0, end_time=35)
+        fi = FastIntensity(events, grid=grid)
         intensity = fi.run_inference()
 
-        dates = [dt.datetime(2000, 1, 2), dt.datetime(2000, 1, 10),
-                 dt.datetime(2000, 1, 15), dt.datetime(2000, 2, 1)]
+        # dates = [dt.datetime(2000, 1, 2), dt.datetime(2000, 1, 10),
+        #          dt.datetime(2000, 1, 15), dt.datetime(2000, 2, 1)]
 
-        fi = FastIntensity.from_dates(dates, start_date=dt.datetime(2000, 1, 1),
-                                      end_date=dt.datetime(2000, 3, 1))
-        intensity = fi.run_inference()
+        # fi = FastIntensity.from_dates(dates, start_date=dt.datetime(2000, 1, 1),
+        #                               end_date=dt.datetime(2000, 3, 1))
+        # intensity = fi.run_inference()
 
-        date_strs = ['2000-01-02', '2000-01-10', '2000-01-15', '2000-02-01']
+        # date_strs = ['2000-01-02', '2000-01-10', '2000-01-15', '2000-02-01']
 
-        fi = FastIntensity.from_string_dates(date_strs, start_date='2000-01-01',
-                                             end_date='2000-03-01',
-                                             date_format='%Y-%m-%d')
-        intensity = fi.run_inference()
+        # fi = FastIntensity.from_string_dates(date_strs, start_date='2000-01-01',
+        #                                      end_date='2000-03-01',
+        #                                      date_format='%Y-%m-%d')
+        # intensity = fi.run_inference()
     """
 
-    def __init__(self, events, start_time, end_time, density=0.00274,
-                 resolution=1, iterations=100):
+    def __init__(self, events, grid, density=0.00274, iterations=100):
         """
         Initialize with events and inference parameters.
 
         Args:
             events (array-like of real numbers): event times in units of days
                 since an arbitrary reference point
-            start_time (number): beginning of the computed inference time range
-            end_time (number): end of the computed inference time range
+            grid (array-like of reals): Evenly spaced time points at which to
+                compute the curve.
             density (number): average number of bin edges between neighboring
                 points for inference (default 1/365).
-            resolution (number): resolution for bin edges in units of days
-                for inference (default 1).
             iterations (int): number of inference iterations (default: 100)
         """
 
-        super().__init__(events, start_time, end_time, resolution)
+        super().__init__(events, grid)
 
         self.density = density
-        self.resolution = resolution
         self.iterations = iterations
 
-    @classmethod
-    def from_dates(cls, dates, start_date, end_date, density=0.00274,
-                   resolution=1, iterations=100):
-        """
-        Convert dates/datetimes to events and initialize an instance.
+    # @classmethod
+    # def from_dates(cls, dates, start_date, end_date, density=0.00274,
+    #                resolution=1, iterations=100):
+    #     """
+    #     Convert dates/datetimes to events and initialize an instance.
 
-        Args:
-            dates (array-like of date/datetime)
-            start_date (date/datetime)
-            end_date (date/datetime)
-            density (number): average number of bin edges between neighboring
-                points for inference (default 1/365).
-            resolution (number): resolution for bin edges in units of days
-                for inference (default 1).
-            iterations (int): number of inference iterations (default: 100)"""
-        events, start_e, end_e = FastBase.convert_dates_to_events(
-            dates, start_date, end_date)
-        return cls(events, start_e, end_e, density, resolution, iterations)
+    #     Args:
+    #         dates (array-like of date/datetime)
+    #         start_date (date/datetime)
+    #         end_date (date/datetime)
+    #         density (number): average number of bin edges between neighboring
+    #             points for inference (default 1/365).
+    #         resolution (number): resolution for bin edges in units of days
+    #             for inference (default 1).
+    #         iterations (int): number of inference iterations (default: 100)"""
+    #     events, start_e, end_e = FastBase.convert_dates_to_events(
+    #         dates, start_date, end_date)
+    #     return cls(events, start_e, end_e, density, resolution, iterations)
 
-    @classmethod
-    def from_string_dates(cls, dates, start_date, end_date,
-                          date_format='%Y-%m-%d %H:%M:%S', density=0.00274,
-                          resolution=1, iterations=100):
-        """
-        Convert date strings to events and initialize an instance.
+    # @classmethod
+    # def from_string_dates(cls, dates, start_date, end_date,
+    #                       date_format='%Y-%m-%d %H:%M:%S', density=0.00274,
+    #                       resolution=1, iterations=100):
+    #     """
+    #     Convert date strings to events and initialize an instance.
 
-        Args:
-            dates (array-like of strings): dates represented by correctly
-                formatted strings
-            start_date (string): date represented by a correctly formatted
-                string
-            end_date (string): date represented by a correctly formatted
-                string
-            date_format (string): format of dates in the input (same as used
-                in datetime.datetime.strptime() function)
-            density (number): average number of bin edges between neighboring
-                points for inference (default 1/365).
-            resolution (number): resolution for bin edges in units of days
-                for inference (default 1).
-            iterations (int): number of inference iterations (default: 100)
-         """
-        events, start_e, end_e = FastBase.convert_string_dates_to_events(
-            dates, start_date, end_date, date_format)
-        return cls(events, start_e, end_e, density, resolution, iterations)
+    #     Args:
+    #         dates (array-like of strings): dates represented by correctly
+    #             formatted strings
+    #         start_date (string): date represented by a correctly formatted
+    #             string
+    #         end_date (string): date represented by a correctly formatted
+    #             string
+    #         date_format (string): format of dates in the input (same as used
+    #             in datetime.datetime.strptime() function)
+    #         density (number): average number of bin edges between neighboring
+    #             points for inference (default 1/365).
+    #         resolution (number): resolution for bin edges in units of days
+    #             for inference (default 1).
+    #         iterations (int): number of inference iterations (default: 100)
+    #      """
+    #     events, start_e, end_e = FastBase.convert_string_dates_to_events(
+    #         dates, start_date, end_date, date_format)
+    #     return cls(events, start_e, end_e, density, resolution, iterations)
 
     def run_inference(self):
         """
