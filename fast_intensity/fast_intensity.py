@@ -6,6 +6,7 @@ from datetime import datetime
 
 import numpy as np
 import numpy.random as npr
+import warnings
 
 # Import and compile Cython files
 import pyximport
@@ -59,29 +60,32 @@ class FastIntensity(FastBase):
         intensity = fi.run_inference()
     """
 
-    def __init__(self, events, start_time, end_time):
+    def __init__(self, events, start_time, end_time, density=0.00274,
+                 resolution=1, iterations=100):
         """
-        Initialize with events and the inference tune range expressed as day
-        numbers.
+        Initialize with events and inference parameters.
 
         Args:
             events (array-like of real numbers): event times in units of days
                 since an arbitrary reference point
             start_time (number): beginning of the computed inference time range
             end_time (number): end of the computed inference time range
+            density (number): average number of bin edges between neighboring
+                points for inference (default 1/365).
+            resolution (number): resolution for bin edges in units of days
+                for inference (default 1).
+            iterations (int): number of inference iterations (default: 100)
         """
-        events = np.array(events, dtype=np.float)
-        # Cut out of bounds events
-        events = np.delete(events, np.where(events < start_time))
-        events = np.delete(events, np.where(events > end_time))
 
-        self.events = events
-        self.start = start_time
-        self.end = end_time
-        self.grid = None
+        super().__init__(events, start_time, end_time, resolution)
+
+        self.density = density
+        self.resolution = resolution
+        self.iterations = iterations
 
     @classmethod
-    def from_dates(cls, dates, start_date, end_date):
+    def from_dates(cls, dates, start_date, end_date, density=0.00274,
+                   resolution=1, iterations=100):
         """
         Convert dates/datetimes to events and initialize an instance.
 
@@ -89,15 +93,19 @@ class FastIntensity(FastBase):
             dates (array-like of date/datetime)
             start_date (date/datetime)
             end_date (date/datetime)
-        """
-        events, start_e, end_e = FastBase.convert_dates_to_events(dates,
-                                    start_date, end_date)
-
-        return cls(events, start_e, end_e)
+            density (number): average number of bin edges between neighboring
+                points for inference (default 1/365).
+            resolution (number): resolution for bin edges in units of days
+                for inference (default 1).
+            iterations (int): number of inference iterations (default: 100)"""
+        events, start_e, end_e = FastBase.convert_dates_to_events(
+            dates, start_date, end_date)
+        return cls(events, start_e, end_e, density, resolution, iterations)
 
     @classmethod
     def from_string_dates(cls, dates, start_date, end_date,
-                          date_format='%Y-%m-%d %H:%M:%S'):
+                          date_format='%Y-%m-%d %H:%M:%S', density=0.00274,
+                          resolution=1, iterations=100):
         """
         Convert date strings to events and initialize an instance.
 
@@ -110,46 +118,46 @@ class FastIntensity(FastBase):
                 string
             date_format (string): format of dates in the input (same as used
                 in datetime.datetime.strptime() function)
-        """
-        events, start_e, end_e = FastBase.convert_string_dates_to_events(dates,
-                                    start_date, end_date, date_format)
+            density (number): average number of bin edges between neighboring
+                points for inference (default 1/365).
+            resolution (number): resolution for bin edges in units of days
+                for inference (default 1).
+            iterations (int): number of inference iterations (default: 100)
+         """
+        events, start_e, end_e = FastBase.convert_string_dates_to_events(
+            dates, start_date, end_date, date_format)
+        return cls(events, start_e, end_e, density, resolution, iterations)
 
-        return cls(events, start_e, end_e)
-
-    def run_inference(self, density=0.00274, resolution=1, iterations=100):
+    def run_inference(self):
         """
         Run event intensity inference.
 
         Args:
-            density (number): average number of bin edges between neighboring
-                points (default 1/365).
-            resolution (number): resolution for bin edges in units of days
-                (default 1).
-            iterations (int): number of inference iterations (default: 100)
 
         Returns
             np.array of event intensity
         """
-        self.grid = self._generate_grid(resolution, density)
-
         meanvals = np.zeros(len(self.grid))
         vals = np.zeros(len(self.grid), dtype=np.float)
         n = len(self.events) + 1
-        num_edges = int(2 + np.max([2, np.ceil(density * n)]))
+        num_edges = int(2 + np.max([2, np.ceil(self.density * n)]))
 
-        self._interp_grid = np.linspace(0, n, n+1)
+        # compute event_indices once for all iterations of randomize_edges, for
+        # efficiency
+        event_indices = np.linspace(0, n, n + 1)
+
         self._events_w_endpoints = np.concatenate(([self.start], self.events,
                                                    [self.end]))
-
-        for i in range(iterations):
-            edges = self.randomize_edges(num_edges, density, resolution)
+        for i in range(self.iterations):
+            edges = self.randomize_edges(
+                num_edges, self.density, self.resolution, event_indices)
             h = fast_hist(self.events, edges)
             vals = stair_step(edges, h, self.grid, vals)
-            meanvals = meanvals + (vals - meanvals)/(i+1)
-
+            # vals = self._smooth_interp(edges, h, self.grid)
+            meanvals = meanvals + (vals - meanvals) / (i + 1)
         return meanvals
 
-    def randomize_edges(self, num_edges, density, resolution):
+    def randomize_edges(self, num_edges, density, resolution, event_indices):
         """
         Randomize bin edges for histogram.
 
@@ -157,16 +165,23 @@ class FastIntensity(FastBase):
             np.array of new bin edges
         """
         n = len(self.events) + 1
+
+        # w is the location of the bins in index space (that is, warped
+        # space).
+
         w = n * npr.rand(int(np.max([2, np.ceil(density * n)])))
         w.sort()
 
-        y = np.zeros(num_edges)
+        x = np.zeros(num_edges)
 
-        y[0] = self.start
-        y[-1] = self.end
+        # endpoints cannot be within the range of events, so use floor and ceil
+        # instead of round
+        x[0] = np.floor(self.start / resolution) * resolution
+        x[-1] = np.ceil(self.end / resolution) * resolution
 
-        y[1:-1] = np.interp(w, self._interp_grid, self._events_w_endpoints)
+        x[1:-1] = np.interp(w, event_indices, self._events_w_endpoints)
 
-        y = np.array(y, dtype=np.float)
-        y = np.round(y/resolution)*resolution
-        return y
+        # y = np.array(y, dtype=np.float)
+        x = np.round(x / resolution) * resolution
+
+        return x

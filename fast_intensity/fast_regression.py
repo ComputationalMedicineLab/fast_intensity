@@ -5,7 +5,7 @@ from .fast_base import FastBase
 from datetime import datetime
 
 import numpy as np
-from scipy.interpolate import pchip_interpolate
+
 
 class FastRegression(FastBase):
     """Estimates values over time.
@@ -43,7 +43,7 @@ class FastRegression(FastBase):
         regression = fr.run_inference()
     """
 
-    def __init__(self, events, values, start_event, end_event):
+    def __init__(self, events, values, start_event, end_event, resolution=1):
         """
         Initialize with events and corresponding values.
 
@@ -54,6 +54,8 @@ class FastRegression(FastBase):
                 times, must be same the length as events
             start_event (number): beginning of the computed inference time range
             end_event (number): end of the computed inference time range
+            resolution (number): resolution for bin edges in units of days
+                for inference (default 1).
         """
         if len(events) != len(values):
             raise ValueError("Events and values are different lengths.")
@@ -61,23 +63,21 @@ class FastRegression(FastBase):
         if len(events) == 0:
             raise ValueError("Events and values are empty.")
 
-        # Convert to numpy array
-        events = np.array(events, dtype=np.float)
-        values = np.array(values, dtype=np.float)
-        # Cut out of bounds events
-        values = np.delete(values, np.where(events < start_event))
-        events = np.delete(events, np.where(events < start_event))
-        values = np.delete(values, np.where(events > end_event))
-        events = np.delete(events, np.where(events > end_event))
+        super().__init__(events, start_event, end_event, resolution)
 
+        values = np.array(values, dtype=np.float)
+        # Cut out of bounds values
+        values = np.delete(values, np.where(events < start_event))
+        values = np.delete(values, np.where(events > end_event))
+
+        self.resolution = resolution
         self.events = events
         self.values = values
         self.start = start_event
         self.end = end_event
-        self.grid = None
 
     @classmethod
-    def from_dates(cls, dates, values, start_date, end_date):
+    def from_dates(cls, dates, values, start_date, end_date, resolution=1):
         """
         Convert dates/datetimes to events and initialize an instance.
 
@@ -87,14 +87,14 @@ class FastRegression(FastBase):
             start_event (date/datetime)
             end_event (date/datetime)
         """
-        events, start_e, end_e = FastBase.convert_dates_to_events(dates,
-                                    start_date, end_date)
+        events, start_e, end_e = FastBase.convert_dates_to_events(
+            dates, start_date, end_date)
 
-        return cls(events, values, start_e, end_e)
+        return cls(events, values, start_e, end_e, resolution)
 
     @classmethod
     def from_string_dates(cls, dates, values, start_date, end_date,
-                          date_format='%Y-%m-%d %H:%M:%S'):
+                          date_format='%Y-%m-%d %H:%M:%S', resolution=1):
         """
         Convert date strings to events and initialize an instance.
 
@@ -110,41 +110,20 @@ class FastRegression(FastBase):
             date_format (string): format of dates in the input (same as used
                 in datetime.datetime.strptime() function)
         """
-        events, start_e, end_e = FastBase.convert_string_dates_to_events(dates,
-                                    start_date, end_date, date_format)
+        events, start_e, end_e = FastBase.convert_string_dates_to_events(
+            dates, start_date, end_date, date_format)
 
-        return cls(events, values, start_e, end_e)
+        return cls(events, values, start_e, end_e, resolution)
 
-    def _pchip_with_const_extrapolation(self, events, values, grid):
-        """
-        Interpolates between readings, extrapolates based on boundry values.
-        """
-
-        if len(grid) > 1:
-            f_event, f_value = ([grid[0]],[values[0]]) if grid[0] != events[0] else ([],[])
-            l_event, l_value = ([grid[-1]],[values[-1]]) if grid[-1] != events[-1] else ([],[])
-            events = np.concatenate((f_event, events, l_event))
-            values = np.concatenate((f_value, values, l_value))
-
-        return pchip_interpolate(events, values, grid)
-
-    def run_inference(self, density=0.00274, resolution=1):
+    def run_inference(self):
         """
         Run regression inference.
-
-        Args:
-            density (number): average number of bin edges between neighboring
-                points (default 1/365).
-            resolution (number): resolution for bin edges in units of days
-                (default 1).
 
         Returns
             np.array
         """
-        self.grid = self._generate_grid(resolution, density)
-
         if len(self.events) == 1:
-            return np.ones(len(self.grid))*self.values[0]
+            return np.ones(len(self.grid)) * self.values[0]
 
-        return self._pchip_with_const_extrapolation(self.events, self.values,
-                                                    self.grid)
+        return self._pchip_with_const_extrapolation(
+            self.events, self.values, self.grid)
