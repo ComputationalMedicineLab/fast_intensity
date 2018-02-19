@@ -29,15 +29,11 @@ Usage
 
 ```python
 from fast_intensity import FastIntensity
+import datetime as dt
 
-# Basic usage with events including endpoints
+# Basic usage with events
 events = [10, 15, 16, 17, 28]
-events_with_endpoints = [-1] + events + [35]
-fi = FastIntensity(events_with_endpoints)
-intensity = fi.run_inference()
-
-# Provided events don't have endpoints. Left and right bounds passed as an argument
-fi = FastIntensity.from_events(events, start_event=-1, end_event=35)
+fi = FastIntensity(events, start_time=0, end_time=35)
 intensity = fi.run_inference()
 
 # Events and endpoints as date or datetime object
@@ -57,7 +53,6 @@ fi = FastIntensity.from_string_dates(date_strings, start_date='2000-01-01',
 intensity = fi.run_inference()
 
 # Displaying intensity with matplotlib
-import datetime
 import matplotlib.pyplot as plt
 from matplotlib.dates import MonthLocator, WeekdayLocator, DateFormatter, drange
 
@@ -70,12 +65,12 @@ date_strings = ['2016-04-26','2016-04-27','2016-04-28','2016-04-29','2016-04-30'
 fi = FastIntensity.from_string_dates(date_strings, start_date='2016-01-01',
                                      end_date='2016-12-31',
                                      date_format='%Y-%m-%d')
-intensity = fi.run_inference(1000)
+intensity = fi.run_inference()
 
 months = MonthLocator(range(0, 13), bymonthday=1, interval=1)
 monthsFmt = DateFormatter("%b %Y")
-days = drange(datetime.date(2015, 12, 31), datetime.date(2017, 1, 1),
-              datetime.timedelta(days=1))
+days = drange(dt.date(2016, 1, 1), dt.date(2016, 12, 31),
+              dt.timedelta(days=1))
 fig, ax = plt.subplots()
 ax.plot_date(days, intensity, '-')
 ax.xaxis.set_major_locator(months)
