@@ -42,3 +42,5 @@ output/
 
 # Cython intermediate files
 fast_intensity/*.c
+
+dist/
