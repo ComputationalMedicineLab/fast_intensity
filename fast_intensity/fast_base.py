@@ -7,23 +7,14 @@ import pdb
 
 
 class FastBase(object):
-    def __init__(self, events, grid):
+    def __init__(self, grid):
         """Initialize with parameters.
 
         Args:
-            events (array-like of reals): event times in units of days
-                since an arbitrary reference point
             grid (array-like of reals): Evenly spaced time points at which to
                 compute the curve.
         """
         self.grid = grid
-
-        events = np.array(events, dtype=np.float)
-        # Cut out of bounds events
-        events = np.delete(events, np.where(events < grid[0]))
-        events = np.delete(events, np.where(events > grid[-1]))
-
-        self.events = events
 
     @property
     def start(self):

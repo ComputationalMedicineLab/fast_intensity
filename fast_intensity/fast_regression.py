@@ -1,5 +1,5 @@
 # Copyright 2017 Thomas A. Lasko, Jacek Bajor
-
+import pdb
 from .fast_base import FastBase
 
 from datetime import datetime
@@ -63,15 +63,20 @@ class FastRegression(FastBase):
         if len(events) == 0:
             raise ValueError("Events and values are empty.")
 
-        super().__init__(events, grid)
-
         values = np.array(values, dtype=np.float)
+
         # Cut out of bounds values
-        values = np.delete(values, np.where(events < grid[0]))
-        values = np.delete(values, np.where(events > grid[-1]))
+        before_start = np.where(events < grid[0])
+        values = np.delete(values, before_start)
+        events = np.delete(events, before_start)
+
+        after_end = np.where(events > grid[-1])
+        values = np.delete(values, after_end)
+        events = np.delete(events, after_end)
 
         self.events = events
         self.values = values
+        self.grid = grid
 
     # @classmethod
     # def from_dates(cls, dates, values, start_date, end_date, resolution=1):

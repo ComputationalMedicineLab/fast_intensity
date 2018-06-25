@@ -57,8 +57,15 @@ class FastIntensity(FastBase):
             iterations: number of inference iterations (default 100).
             min_count: The minimum number of events per bin (default 3).
         """
+        # Cut out of bounds values
+        before_start = np.where(events < grid[0])
+        events = np.delete(events, before_start)
 
-        super().__init__(events, grid)
+        after_end = np.where(events > grid[-1])
+        events = np.delete(events, after_end)
+
+        self.events = events
+        self.grid = grid
         self.iterations = iterations
 
     def run_inference(self):
