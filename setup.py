@@ -20,10 +20,12 @@ dependency_links = [x.strip().replace('git+', '') for x in all_reqs if x.startsw
 from Cython.Build import cythonize
 import numpy as np
 extensions = [
-    Extension("fast_intensity/stair_step", ["fast_intensity/stair_step.pyx"],
-        include_dirs = [np.get_include()]),
-    Extension("fast_intensity/fast_hist", ["fast_intensity/fast_hist.pyx"],
-        include_dirs = [np.get_include()])
+    Extension(name="fast_intensity.stair_step",
+              sources=["fast_intensity/stair_step.pyx"],
+              include_dirs=[np.get_include()]),
+    Extension(name="fast_intensity.fast_hist",
+              sources=["fast_intensity/fast_hist.pyx"],
+              include_dirs=[np.get_include()]),
 ]
 
 setup(
