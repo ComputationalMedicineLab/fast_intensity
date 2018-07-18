@@ -78,45 +78,6 @@ class FastRegression(FastBase):
         self.values = values
         self.grid = grid
 
-    # @classmethod
-    # def from_dates(cls, dates, values, start_date, end_date, resolution=1):
-    #     """
-    #     Convert dates/datetimes to events and initialize an instance.
-
-    #     Args:
-    #         dates (array-like of date/datetime)
-    #         values (array-like of real numbers)
-    #         start_event (date/datetime)
-    #         end_event (date/datetime)
-    #     """
-    #     events, start_e, end_e = FastBase.convert_dates_to_events(
-    #         dates, start_date, end_date)
-
-    #     return cls(events, values, start_e, end_e, resolution)
-
-    # @classmethod
-    # def from_string_dates(cls, dates, values, start_date, end_date,
-    #                       date_format='%Y-%m-%d %H:%M:%S', resolution=1):
-    #     """
-    #     Convert date strings to events and initialize an instance.
-
-    #     Args:
-    #         dates (array-like of strings): dates represented by correctly
-    #             formatted strings
-    #         values (array-like of real numbers): values for corresponding dates,
-    #             must be same the length as events
-    #         start_event (string): date represented by a correctly formatted
-    #             string
-    #         end_event (string): date represented by a correctly formatted
-    #             string
-    #         date_format (string): format of dates in the input (same as used
-    #             in datetime.datetime.strptime() function)
-    #     """
-    #     events, start_e, end_e = FastBase.convert_string_dates_to_events(
-    #         dates, start_date, end_date, date_format)
-
-    #     return cls(events, values, start_e, end_e, resolution)
-
     def run_inference(self):
         """
         Run regression inference.
@@ -135,8 +96,7 @@ def _pchip_with_const_extrapolation(events, values, grid):
     """
     Interpolates between readings, extrapolates based on boundry values.
     """
-    # TODO: Change to use mean outside of the boundaries, or maybe to approach
-    # the mean at the endpoints of grid.
+
     if len(grid) > 1:
         f_event, f_value = ([grid[0]], [values[0]]
                             ) if grid[0] != events[0] else ([], [])
