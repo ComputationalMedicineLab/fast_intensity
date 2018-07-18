@@ -33,6 +33,8 @@ docker pull $X86_IMG
 
 # Run the builder, leaving wheels in ./wheelhouse
 docker run --rm -v $(pwd):/io $X86_IMG /io/builder
+# In case dist hasn't been generated
+mkdir -p dist/
 cp wheelhouse/* dist/
 
 # Cleanup

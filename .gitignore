@@ -24,8 +24,9 @@ pip-log.txt
 .cache
 .coverage
 .coverage.*
-.pytest_cache
+coverage.xml
 htmlcov/
+.pytest_cache
 
 # Complexity
 output/*.html
