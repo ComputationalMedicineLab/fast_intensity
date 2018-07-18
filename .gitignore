@@ -20,10 +20,12 @@ __pycache__
 pip-log.txt
 
 # Unit test / coverage reports
+.tox
 .cache
 .coverage
-.tox
+.coverage.*
 .pytest_cache
+htmlcov/
 
 # Complexity
 output/*.html
