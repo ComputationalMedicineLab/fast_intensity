@@ -24,6 +24,9 @@ test:
 	# Run tests just for currently most recent interpreter
 	tox -e py37
 
+test-each-env:
+	tox -e py35,py36,py37
+
 coverage:
 	coverage erase
 	tox -e py35-cov,py36-cov,py37-cov
@@ -56,7 +59,7 @@ live-upload: release
 
 .PHONY: purge clean-artifacts clean-caches clean-dist
 .PHONY: install-dev uninstall
-.PHONY: test coverage htmlcov
+.PHONY: test test-each-env coverage htmlcov
 .PHONY: wheels dist release test-upload live-upload
 
 # vim: ts=4

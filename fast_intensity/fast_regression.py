@@ -44,6 +44,7 @@ class FastRegression(FastBase):
         if len(events) == 0:
             raise ValueError("Events and values are empty.")
 
+        events = np.array(events, dtype=np.float)
         values = np.array(values, dtype=np.float)
 
         # Cut out of bounds values
@@ -69,7 +70,8 @@ class FastRegression(FastBase):
         if len(self.events) == 1:
             return np.ones(len(self.grid)) * self.values[0]
 
-        return _pchip_with_const_extrapolation(self.events, self.values,
+        return _pchip_with_const_extrapolation(self.events,
+                                               self.values,
                                                self.grid)
 
 
