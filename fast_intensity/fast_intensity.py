@@ -1,26 +1,21 @@
 # Copyright 2017 Thomas A. Lasko, Jacek Bajor
-
-from .fast_base import FastBase
-
-from datetime import datetime
-
 import numpy as np
 import numpy.random as npr
-import warnings
 
 # Import and compile Cython files
 import pyximport
 pyximport.install(setup_args={"include_dirs": np.get_include()})
 
-from .stair_step import stair_step
+from .fast_base import FastBase
 from .fast_hist import fast_hist
+from .stair_step import stair_step
 
 
 class FastIntensity(FastBase):
     """Estimates (potentially nonstationary) event intensity vs. time.
 
     This class uses Completely Random Average Shifted Histograms (CRASH) to
-    compute a continuous curve of event  intensity vs. time, as described in **
+    compute a continuous curve of event intensity vs. time, as described in **
     Citation TBD **.
 
     Each histogram is defined by a random number of bin edges, with the

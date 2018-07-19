@@ -1,11 +1,8 @@
 # Copyright 2017 Thomas A. Lasko, Jacek Bajor
-import pdb
-from .fast_base import FastBase
-
-from datetime import datetime
+import numpy as np
 from scipy.interpolate import pchip_interpolate
 
-import numpy as np
+from .fast_base import FastBase
 
 
 class FastRegression(FastBase):
@@ -27,22 +24,6 @@ class FastRegression(FastBase):
 
         fr = FastRegression(events, values, grid)
         regression = fr.run_inference()
-
-        # dates = [dt.datetime(2000, 1, 2), dt.datetime(2000, 1, 10),
-        #          dt.datetime(2000, 1, 15), dt.datetime(2000, 2, 1)]
-
-        # fr = FastRegression.from_dates(dates, values,
-        #                                start_date=dt.datetime(2000, 1, 1),
-        #                                end_date=dt.datetime(2000, 3, 1))
-        # regression = fr.run_inference()
-
-        # date_strs = ['2000-01-02', '2000-01-10', '2000-01-15', '2000-02-01']
-
-        # fr = FastRegression.from_string_dates(date_strs, values,
-        #                                       start_date='2000-01-01',
-        #                                       end_date='2000-03-01',
-        #                                       date_format='%Y-%m-%d')
-        # regression = fr.run_inference()
     """
 
     def __init__(self, events, values, grid):
