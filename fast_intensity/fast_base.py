@@ -1,10 +1,5 @@
 # Copyright 2017 Thomas A. Lasko, Jacek Bajor
 
-from datetime import datetime
-
-import numpy as np
-import pdb
-
 
 class FastBase(object):
     def __init__(self, grid):

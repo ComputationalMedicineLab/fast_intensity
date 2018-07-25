@@ -1,55 +1,89 @@
-from setuptools import setup, find_packages, Extension
+"""
+Fast intensity inference
+"""
 from codecs import open
-from os import path
+from distutils.version import LooseVersion
+from os.path import abspath, dirname, join
 
-__version__ = '0.1.5'
+from setuptools import setup, Extension
 
-here = path.abspath(path.dirname(__file__))
+MIN_CYTHON = '0.28.0'
+NAME = 'fast-intensity'
+BASE_DIR = abspath(dirname(__file__))
 
-# Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
-# get the dependencies and installs
-with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
-    all_reqs = f.read().split('\n')
-
-install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
-dependency_links = [x.strip().replace('git+', '') for x in all_reqs if x.startswith('git+')]
-
-from Cython.Build import cythonize
-import numpy as np
-extensions = [
-    Extension(name="fast_intensity.stair_step",
-              sources=["fast_intensity/stair_step.pyx"],
-              include_dirs=[np.get_include()]),
-    Extension(name="fast_intensity.fast_hist",
-              sources=["fast_intensity/fast_hist.pyx"],
-              include_dirs=[np.get_include()]),
-]
-
-setup(
-    name='fast-intensity',
-    version=__version__,
-    description='Fast density inference',
-    long_description=long_description,
+# set up the setup() metadata
+metadata = dict(
+    name=NAME,
+    description=__doc__.strip(),
     url='https://github.com/ComputationalMedicineLab/fast_intensity',
-    download_url='https://github.com/ComputationalMedicineLab/fast_intensity/tarball/v' + __version__,
     license='BSD',
     classifiers=[
-      'Development Status :: 3 - Alpha',
-      'Intended Audience :: Developers',
-      'Programming Language :: Python :: 3',
-      'License :: OSI Approved :: BSD License',
-      'Topic :: Scientific/Engineering :: Information Analysis',
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python :: 3',
+        'Topic :: Scientific/Engineering :: Information Analysis',
     ],
-    keywords='',
-    packages=find_packages(exclude=['docs', 'tests*']),
+)
+
+version_path = join(BASE_DIR, 'fast_intensity', '__version__.py')
+with open(version_path, encoding='utf-8') as fd:
+    # loads a bunch of metadata
+    data = {}
+    exec(fd.read(), {}, data)
+    for key in ['version', 'author', 'maintainer', 'maintainer_email']:
+        metadata[key] = data['__{}__'.format(key)]
+    del data
+
+with open(join(BASE_DIR, 'README.md'), encoding='utf-8') as fd:
+    metadata['long_description'] = fd.read()
+    metadata['long_description_content_type'] = 'text/markdown'
+
+# Load build-time dependencies
+try:
+    import numpy
+except ImportError:
+    msg = '{} requires numpy to build'
+    raise ImportError(msg.format(NAME))
+else:
+    np_includes = [numpy.get_include()]
+
+try:
+    import Cython
+    assert Cython.__version__ >= LooseVersion(MIN_CYTHON)
+except (ImportError, AssertionError):
+    msg = '{} requires cython>={} to build'
+    raise ImportError(msg.format(NAME, MIN_CYTHON))
+else:
+    from Cython.Build import build_ext as cython_build_ext
+
+# Run the build
+setup(
+    **metadata,
+
+    # Install data
+    zip_safe=False,
     include_package_data=True,
-    author='Thomas A. Lasko, Jacek Bajor',
-    install_requires=install_requires,
-    dependency_links=dependency_links,
-    author_email='jacek.m.bajor@vanderbilt.edu',
+    packages=['fast_intensity'],
+    # Cython is not required a runtime, it is not an installation dependency
+    install_requires=[
+        'numpy',
+        'scipy',
+    ],
     test_suite='tests',
-    ext_modules = cythonize(extensions),
+    ext_modules=[
+        Extension(
+            name="fast_intensity.stair_step",
+            sources=["fast_intensity/stair_step.pyx"],
+            include_dirs=np_includes,
+        ),
+        Extension(
+            name="fast_intensity.fast_hist",
+            sources=["fast_intensity/fast_hist.pyx"],
+            include_dirs=np_includes,
+        ),
+    ],
+    cmdclass={
+        'build_ext': cython_build_ext,
+    },
 )

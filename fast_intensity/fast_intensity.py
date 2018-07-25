@@ -1,36 +1,32 @@
 # Copyright 2017 Thomas A. Lasko, Jacek Bajor
-
-from .fast_base import FastBase
-
-from datetime import datetime
-
 import numpy as np
 import numpy.random as npr
-import warnings
 
 # Import and compile Cython files
 import pyximport
 pyximport.install(setup_args={"include_dirs": np.get_include()})
 
-from .stair_step import stair_step
+from .fast_base import FastBase
 from .fast_hist import fast_hist
+from .stair_step import stair_step
 
 
 class FastIntensity(FastBase):
     """Estimates (potentially nonstationary) event intensity vs. time.
 
     This class uses Completely Random Average Shifted Histograms (CRASH) to
-    compute a continuous curve of event  intensity vs. time, as described in **
+    compute a continuous curve of event intensity vs. time, as described in **
     Citation TBD **.
 
     Each histogram is defined by a random number of bin edges, with the
     location of each bin edge sampled uniformly at random between event
     *indices* (not their locations). For example, with the sequence of events
-    [1, 2, 3, 100], there is the same probability that an edge will appear between
-    3 and 3 as between 3 and 100.  This allows for the final density estimation
-    to adapt its bandwidth to the nonstationarity of event locations. A
-    constraint on the minimum number of events per bin keeps density peaks from
-    forming pathologically around each event and at endpoints.
+    [1, 2, 3, 100], there is the same probability that an edge will appear
+    between 3 and 3 as between 3 and 100.  This allows for the final density
+    estimation to adapt its bandwidth to the nonstationarity of event
+    locations. A constraint on the minimum number of events per bin keeps
+    density peaks from forming pathologically around each event and at
+    endpoints.
 
     Attributes:
         events (array-like of sorted real numbers): event times
@@ -96,7 +92,11 @@ class FastIntensity(FastBase):
                 num_bins = npr.randint(1, max_bins + 1)
 
             boundaries = self._get_boundaries(num_bins, min_count)
-            h = fast_hist(self.events, boundaries)
+            # fast_hist expects arrays of floats; in some scenarios events may
+            # be an array of longs.  We explicitly cast here to avoid a buffer
+            # data type mismatch
+            h = fast_hist(self.events.astype(np.float),
+                          boundaries.astype(np.float))
             vals = stair_step(boundaries, h, self.grid, vals)
             meanvals = meanvals + (vals - meanvals) / (i + 1)
 

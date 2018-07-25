@@ -1,34 +1,32 @@
-*.py[cod]
-
-# C extensions
+# Python & C artifacts
+*.py[co]
+__pycache__
+*.c
 *.so
+
+# Build system directories and secrets
+.pypirc
+/build
+/dist
+/wheelhouse
+/.eggs
+/*.egg-info
 
 # pycharm
 .idea/
 .idea
 
-# Packages
-*.egg
-*.egg-info
-build
-eggs
-.eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
-
 # Installer logs
 pip-log.txt
 
 # Unit test / coverage reports
-.coverage
 .tox
-nosetests.xml
+.cache
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache
 
 # Complexity
 output/*.html
@@ -36,11 +34,3 @@ output/*/index.html
 
 # Sphinx
 docs/_build
-
-# Cookiecutter
-output/
-
-# Cython intermediate files
-fast_intensity/*.c
-
-dist/
