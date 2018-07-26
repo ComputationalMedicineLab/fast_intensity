@@ -1,8 +1,6 @@
 fast-intensity
 ===============================
 
-version number: 0.1.5
-
 authors: Thomas A. Lasko, Jacek Bajor
 
 Overview
@@ -13,71 +11,69 @@ Fast density inference. Generates intensity curves from given events.
 Installation
 ------------
 
-To install use pip:
+If you prefer to install a precompiled binary, we provide wheels for OS X and
+via the [manylinux](https://github.com/pypa/manylinux) project.  The basic pip
+install command line
 
     $ pip install fast-intensity
 
+should prefer one of our prebuilt binaries. Installation from source requires
+an environment with Cython and numpy preinstalled.  
 
-Or clone the repo:
+    $ pip install cython numpy
+
+Then you may install a release from source by specifying _not_ to use a binary:
+
+    $ pip install fast-intensity --no-binary fast-intensity
+
+(Yes, it is necessary to specify `fast-intensity` twice.)  Alternately, to
+install the bleeding edge version:
 
     $ git clone https://github.com/ComputationalMedicineLab/fast-intensity.git
-    $ python setup.py install
+    $ cd fast-intensity
+    $ pip install -e .
 
 
 Usage
 -----
 
 ```python
-from fast_intensity import FastIntensity
-import datetime as dt
-
-# Basic usage with events
-events = [10, 15, 16, 17, 28]
-fi = FastIntensity(events, start_time=0, end_time=35)
-intensity = fi.run_inference()
-
-# Events and endpoints as date or datetime object
-dates = [dt.datetime(2000, 1, 2), dt.datetime(2000, 1, 10),
-         dt.datetime(2000, 1, 15), dt.datetime(2000, 2, 1)]
-
-fi = FastIntensity.from_dates(dates, start_date=dt.datetime(2000, 1, 1),
-                              end_date=dt.datetime(2000, 3, 1))
-intensity = fi.run_inference()
-
-# Events and endpoints as string representing time or date
-date_strings = ['2000-01-02', '2000-01-10', '2000-01-15', '2000-02-01']
-
-fi = FastIntensity.from_string_dates(date_strings, start_date='2000-01-01',
-                                     end_date='2000-03-01',
-                                     date_format='%Y-%m-%d')
-intensity = fi.run_inference()
-
-# Displaying intensity with matplotlib
+%matplotlib inline
 import matplotlib.pyplot as plt
-from matplotlib.dates import MonthLocator, WeekdayLocator, DateFormatter, drange
+import numpy as np
+import datetime as dt
+from fast_intensity import FastIntensity
+
+np.random.seed(42)
+
+# Specify a series of 100 events spread over a year
+days = np.arange(0, 365)
+np.random.shuffle(days)
+events = sorted(days[:100])
+
+# Specify times (as reals) where we want to calculate the intensity of event occurrence
+grid = np.linspace(1, 365, num=12)
+
+# Configure a FastIntensity instance with the events and the grid
+curve_builder = FastIntensity(events, grid)
+
+# Generate the intensity curve - the unit is events per time unit
+intensity = curve_builder.run_inference()
+print(intensity)
+#     array([0.38953   , 0.27764734, 0.33549508, 0.27285165, 0.22284481,
+#            0.16997545, 0.26651725, 0.23580527, 0.23351076, 0.25272662,
+#            0.33146159, 0.28486727])
 
 plt.style.use('ggplot')
-
-date_strings = ['2016-04-26','2016-04-27','2016-04-28','2016-04-29','2016-04-30',
-  '2016-05-01','2016-05-02','2016-05-03','2016-05-04','2016-05-05','2016-09-01',
-  '2016-09-02','2016-09-03','2016-09-04','2016-09-05','2016-09-06','2016-09-07',
-  '2016-09-08','2016-09-09','2016-10-09','2016-10-10','2016-12-09', '2016-12-10']
-fi = FastIntensity.from_string_dates(date_strings, start_date='2016-01-01',
-                                     end_date='2016-12-31',
-                                     date_format='%Y-%m-%d')
-intensity = fi.run_inference()
-
-months = MonthLocator(range(0, 13), bymonthday=1, interval=1)
-monthsFmt = DateFormatter("%b %Y")
-days = drange(dt.date(2016, 1, 1), dt.date(2016, 12, 31),
-              dt.timedelta(days=1))
-fig, ax = plt.subplots()
-ax.plot_date(days, intensity, '-')
-ax.xaxis.set_major_locator(months)
-ax.xaxis.set_major_formatter(monthsFmt)
-ax.autoscale_view()
-fig.autofmt_xdate()
+fig, ax = plt.subplots(figsize=(9,9))
+ax.scatter(events, np.zeros(len(events)), alpha='0.4', label='Events')
+ax.scatter(grid, np.zeros(len(grid)) + 0.025, label='Grid')
+ax.plot(grid, intensity, label='Intensity')
+plt.legend()
 plt.show()
 ```
+
+You can see how the intensity graph dips in the middle, where events are more thinly spaced,
+and rises near the beginning (where we have a high density of events).
 
 ![figure](https://github.com/ComputationalMedicineLab/fast_intensity/raw/master/intensity_figure.png "Figure")
