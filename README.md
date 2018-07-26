@@ -12,8 +12,8 @@ Installation
 ------------
 
 If you prefer to install a precompiled binary, we provide wheels for OS X and
-via the [manylinux](https://github.com/pypa/manylinux) project.  The basic pip
-install command line
+Linux (via the [manylinux](https://github.com/pypa/manylinux) project).  The
+basic pip install command line
 
     $ pip install fast-intensity
 
