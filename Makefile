@@ -43,8 +43,9 @@ dist:
 	python setup.py sdist bdist_wheel
 
 release:
-	@echo "Building release..."
+	@echo "Running tests..."
 	tox -e py35,py36,py37
+	@echo "Building release..."
 	$(MAKE) dist
 	$(MAKE) wheels
 
