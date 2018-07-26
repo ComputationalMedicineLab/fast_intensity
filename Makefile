@@ -49,13 +49,13 @@ release:
 	$(MAKE) dist
 	$(MAKE) wheels
 
-test-upload: release
+test-upload:
 	@echo "Uploading to test index..."
-	twine upload -r testpypi dist/*
+	twine upload --config-file=.pypirc -r testpypi dist/*
 
-live-upload: release
+live-upload:
 	@echo "Pushing live release to pypi..."
-	twine upload dist/*
+	twine upload --config-file=.pypirc dist/*
 
 
 .PHONY: purge clean-artifacts clean-caches clean-dist
