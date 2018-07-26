@@ -76,4 +76,4 @@ plt.show()
 You can see how the intensity graph dips in the middle, where events are more thinly spaced,
 and rises near the beginning (where we have a high density of events).
 
-![figure](https://github.com/ComputationalMedicineLab/fast_intensity/raw/master/intensity_figure.png "Figure")
+![figure](/intensity_figure.png "Figure")
