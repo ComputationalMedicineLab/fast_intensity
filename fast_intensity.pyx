@@ -1,14 +1,127 @@
-# Copyright 2017 Thomas A. Lasko, Jacek Bajor
+"""Fast intensity inference"""
 import numpy as np
+cimport numpy as np
 import numpy.random as npr
+from scipy.interpolate import pchip_interpolate
 
-# Import and compile Cython files
-import pyximport
-pyximport.install(setup_args={"include_dirs": np.get_include()})
+DTYPE = np.float
+ctypedef np.float_t DTYPE_t
 
-from .fast_base import FastBase
-from .fast_hist import fast_hist
-from .stair_step import stair_step
+
+__version__ = '0.3'
+__version_info__ = tuple(__version__.split('.'))
+
+__author__ = 'Thomas A. Lasko, Jacek Bajor, John M Still'
+__maintainer__ = 'John M Still'
+__maintainer_email__ = 'john.m.still@vumc.org'
+
+__all__ = ['__doc__',
+           '__version__',
+           '__version_info__',
+           '__author__',
+           '__maintainer__',
+           '__maintainer_email__',
+           'fast_hist',
+           'stair_step',
+           'FastIntensity',
+           'FastRegression']
+
+
+class FastBase(object):
+    def __init__(self, grid):
+        """Initialize with parameters.
+
+        Args:
+            grid (array-like of reals): Evenly spaced time points at which to
+                compute the curve.
+        """
+        self.grid = grid
+
+    @property
+    def start(self):
+        return self.grid[0]
+
+    @property
+    def end(self):
+        return self.grid[-1]
+
+    @property
+    def resolution(self):
+        return self.grid[1] - self.grid[0]
+
+    def run_inference(self):
+        raise NotImplementedError
+
+
+def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
+    """
+    Return density histogram.
+
+    Calculates density of elements x in bins defined by edges. Assumes values
+    and edges are sorted, and edges[0] < x < edges[-1]. Behavior for unsorted
+    values is undefined.
+
+    Args:
+        x (np.array of np.float numbers): values
+        edges (np.array of np.float numbers): bin edges (2 or more values)
+
+    Returns:
+        np.array of density histogram (float)
+    """
+    cdef np.ndarray density = np.zeros(len(edges) - 1, dtype=np.float)
+    cdef int n = len(x)
+    cdef int i = 0
+    cdef int j = 1
+    cdef int start = i
+
+    while i < n:
+        start = i
+
+        while x[i] > edges[j]:
+            j = j + 1
+
+        while i < n and x[i] <= edges[j]:
+            i = i + 1
+
+        edges_distance = (edges[j] - edges[j - 1])
+
+        if edges_distance != 0:
+            density[j-1] = (i - start) / edges_distance
+
+    return density
+
+
+def stair_step(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] y,
+               np.ndarray[DTYPE_t, ndim=1] xp, np.ndarray[DTYPE_t, ndim=1] yp):
+    """
+    Previous neighbor interpolation. Behavoir undefined for unsorted points.
+
+    Args:
+        x (np.array of np.float numbers): sample points, sorted.
+        y (np.array of np.float numbers): sample values (same size as x)
+        xp (np.array of np.float numbers): query points
+        yp (np.array of np.float numbers): preallocated list or np.array for
+            query values (same size as xp)
+
+    Returns:
+        np.array of interpolated values (float)
+    """
+    cdef int n = xp.shape[0]
+    cdef int m = y.shape[0]
+    cdef int j = 0
+    cdef int i = 0
+
+    while j < n and xp[j] < x[i]:
+        yp[j] = 0
+        j += 1
+
+    while j < n and i < m:
+        while i < m-1 and xp[j] >= x[i+1]:
+            i += 1
+        yp[j] = y[i]
+        j += 1
+
+    return yp
 
 
 class FastIntensity(FastBase):
@@ -177,3 +290,89 @@ def _get_sequence_boundaries(num_bins, num_events, min_count=3):
     slop.sort()
     np.add(boundaries[1:-1], slop, out=boundaries[1:-1])
     return boundaries
+
+
+class FastRegression(FastBase):
+    """Estimates values over time.
+
+    Attributes:
+        events (array-like of real numbers): event times in units of days
+            since an arbitrary reference point
+        values (array-like of real numbers): values for each event time
+        start (number): beginning of the computed inference time range
+        end (number): end of the computed inference time range
+        grid (np.array of real numbers): evenly spaced timepoints at which the
+            curve is computed
+
+    Usage:
+        events = [10, 15, 16, 17, 28]
+        values = [120, 128, 119, 148, 144]
+        grid = np.arange(0, 50, 1)
+
+        fr = FastRegression(events, values, grid)
+        regression = fr.run_inference()
+    """
+
+    def __init__(self, events, values, grid):
+        """
+        Initialize with events and corresponding values.
+
+        Args:
+            events (array-like of real numbers): event times in units of days
+                since an arbitrary reference point
+            values (array-like of real numbers): values for corresponding event
+                times, must be same the length as events
+            grid (array-like of reals): Evenly spaced time points at which to
+                compute the curve.
+        """
+        if len(events) != len(values):
+            raise ValueError("Events and values are different lengths.")
+
+        if len(events) == 0:
+            raise ValueError("Events and values are empty.")
+
+        events = np.array(events, dtype=np.float)
+        values = np.array(values, dtype=np.float)
+
+        # Cut out of bounds values
+        before_start = np.where(events < grid[0])
+        values = np.delete(values, before_start)
+        events = np.delete(events, before_start)
+
+        after_end = np.where(events > grid[-1])
+        values = np.delete(values, after_end)
+        events = np.delete(events, after_end)
+
+        self.events = events
+        self.values = values
+        self.grid = grid
+
+    def run_inference(self):
+        """
+        Run regression inference.
+
+        Returns
+            np.array
+        """
+        if len(self.events) == 1:
+            return np.ones(len(self.grid)) * self.values[0]
+
+        return _pchip_with_const_extrapolation(self.events,
+                                               self.values,
+                                               self.grid)
+
+
+def _pchip_with_const_extrapolation(events, values, grid):
+    """
+    Interpolates between readings, extrapolates based on boundry values.
+    """
+
+    if len(grid) > 1:
+        f_event, f_value = ([grid[0]], [values[0]]
+                            ) if grid[0] != events[0] else ([], [])
+        l_event, l_value = ([grid[-1]], [values[-1]]
+                            ) if grid[-1] != events[-1] else ([], [])
+        events = np.concatenate((f_event, events, l_event))
+        values = np.concatenate((f_value, values, l_value))
+
+    return pchip_interpolate(events, values, grid)

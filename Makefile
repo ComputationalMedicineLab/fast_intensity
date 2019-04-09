@@ -1,40 +1,13 @@
-PKG=fast_intensity
-PKG_NAME=fast-intensity
-
-purge: uninstall clean-caches clean-dist clean-artifacts
+clean: clean-artifacts clean-dist
 
 clean-artifacts:
-	rm -rf **/__pycache__ **/*.pyc
-	rm -f $(SRC)/{*.c,*.so}
-
-clean-caches:
-	rm -f .coverage*
-	rm -rf .pytest_cache/ .cache/ .tox/ htmlcov/
+	rm -rf __pycache__ *.pyc *.pyo *.c
 
 clean-dist:
-	rm -rf build/ dist/ wheelhouse/ $(PKG).egg-info/ .eggs/
-
-install-dev:
-	pip install -e .
-
-uninstall:
-	yes | pip uninstall $(PKG_NAME)
+	rm -rf build/ dist/ wheelhouse/ fast_intensity.egg-info/ .eggs/
 
 test:
-	# Run tests just for currently most recent interpreter
-	tox -e py37
-
-test-each-env:
-	tox -e py35,py36,py37
-
-coverage:
-	coverage erase
-	tox -e py35-cov,py36-cov,py37-cov
-	-coverage combine && coverage report
-
-htmlcov: coverage
-	coverage html
-	cd htmlcov && python -m http.server
+	python -m test_fast_intensity -vv
 
 wheels:
 	./build-wheels.sh
@@ -43,8 +16,6 @@ dist:
 	python setup.py sdist bdist_wheel
 
 release:
-	@echo "Running tests..."
-	tox -e py35,py36,py37
 	@echo "Building release..."
 	$(MAKE) dist
 	$(MAKE) wheels
@@ -56,11 +27,5 @@ test-upload:
 live-upload:
 	@echo "Pushing live release to pypi..."
 	twine upload --config-file=.pypirc dist/*
-
-
-.PHONY: purge clean-artifacts clean-caches clean-dist
-.PHONY: install-dev uninstall
-.PHONY: test test-each-env coverage htmlcov
-.PHONY: wheels dist release test-upload live-upload
 
 # vim: ts=4
