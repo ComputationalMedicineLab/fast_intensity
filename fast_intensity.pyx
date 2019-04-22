@@ -15,13 +15,7 @@ __author__ = 'Thomas A. Lasko, Jacek Bajor, John M Still'
 __maintainer__ = 'John M Still'
 __maintainer_email__ = 'john.m.still@vumc.org'
 
-__all__ = ['__doc__',
-           '__version__',
-           '__version_info__',
-           '__author__',
-           '__maintainer__',
-           '__maintainer_email__',
-           'fast_hist',
+__all__ = ['fast_hist',
            'stair_step',
            'FastIntensity',
            'FastRegression']
