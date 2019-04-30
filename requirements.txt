@@ -1,5 +1,4 @@
-# This is a listing of runtime requirements; use dev-requirements.txt for
-# things like the output of `pip freeze` in a dev environment
-# Cython is an additional build-time requirement (more info in setup.py)
+# This is a listing of runtime requirements
+# Building or running tests additionally requires Cython
 numpy
 scipy
