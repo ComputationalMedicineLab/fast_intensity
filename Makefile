@@ -1,3 +1,5 @@
+.PHONY: clean clean-artifacts clean-dist test wheels dist release live-upload
+
 clean: clean-artifacts clean-dist
 
 clean-artifacts:
@@ -20,12 +22,8 @@ release:
 	$(MAKE) dist
 	$(MAKE) wheels
 
-test-upload:
-	@echo "Uploading to test index..."
-	twine upload --config-file=.pypirc -r testpypi dist/*
-
 live-upload:
 	@echo "Pushing live release to pypi..."
-	twine upload --config-file=.pypirc dist/*
+	twine upload dist/*
 
 # vim: ts=4
