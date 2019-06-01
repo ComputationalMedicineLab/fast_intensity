@@ -3,13 +3,20 @@
 clean: clean-artifacts clean-dist
 
 clean-artifacts:
-	rm -rf __pycache__ *.pyc *.pyo *.c
+	rm -rf __pycache__ *.pyc *.pyo *.c *.html
 
 clean-dist:
 	rm -rf build/ dist/ wheelhouse/ fast_intensity.egg-info/ .eggs/
 
 test:
-	python -m test_fast_intensity -vv
+	./run_tests.py
+
+bench:
+	./bench.py
+
+visualize:
+	cython -a fast_intensity.pyx
+	open fast_intensity.html
 
 wheels:
 	./build-wheels.sh

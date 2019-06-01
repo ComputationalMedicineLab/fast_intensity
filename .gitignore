@@ -4,10 +4,13 @@ __pycache__
 *.c
 *.so
 .ipynb_checkpoints
+*.ipynb
 
 # Profiler output / stats
 *.prof
 timings.txt
+# cython -a
+*.html
 
 # Build system directories and secrets
 .pypirc
