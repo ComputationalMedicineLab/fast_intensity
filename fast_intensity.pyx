@@ -174,7 +174,7 @@ cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_cou
         inner[i] += j
         j += min_count
 
-    cdef double[:] bounds = np.zeros(num_bins + 1)
+    cdef double[:] bounds = np.empty(num_bins + 1)
     bounds[0] = 0.0
     bounds[num_bins] = num_events + 1
     bounds[1:num_bins] = inner
@@ -234,7 +234,7 @@ def infer_intensity(events,
     # np.interpolate args xp and fp are precomputed for efficiency
     cdef np.ndarray xp = np.arange(0, n_evts + 2)
     # This is about 4-5x faster than using np.concatenate with lists
-    cdef np.ndarray fp = np.zeros(n_evts + 2)
+    cdef np.ndarray fp = np.empty(n_evts + 2)
     fp[0] = grid[0]
     fp[-1] = grid[-1]
     fp[1:-1] = events
