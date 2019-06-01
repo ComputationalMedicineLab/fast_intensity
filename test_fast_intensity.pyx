@@ -4,20 +4,20 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 from fast_intensity import *
-from fast_intensity import fast_hist, stair_step
+from fast_intensity cimport density_hist, stair_step
 
 
 class TestFastHistFunction(unittest.TestCase):
     def test_returns_correct_density_values_for_uniform_data(self):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dtype=np.float)
         edges = np.array([0, 5.5, 11], dtype=np.float)
-        result = fast_hist(x, edges)
+        result = density_hist(x, edges)
         npt.assert_array_equal(result[0], result[1])
 
     def test_returns_correct_density_values_for_one_val(self):
         x = np.array([5], dtype=np.float)
         edges = np.array([4, 6], dtype=np.float)
-        self.assertEqual(fast_hist(x, edges), np.array([0.5]))
+        self.assertEqual(density_hist(x, edges), np.array([0.5]))
 
 
 class TestStairStepFunction(unittest.TestCase):
