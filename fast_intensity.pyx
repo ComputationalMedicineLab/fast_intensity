@@ -206,11 +206,8 @@ def infer_intensity(events, grid, iterations=100, min_count=3):
     -------
     np.ndarray[np.double_t, ndim=1] : Inferred intensity curve
     """
-    before_start = np.where(events < grid[0])
-    events = np.delete(events, before_start)
-
-    after_end = np.where(events > grid[-1])
-    events = np.delete(events, after_end)
+    events = np.asarray(events, dtype=np.double)
+    events = events[(grid[0] <= events) & (events <= grid[-1])]
 
     meanvals = np.zeros(len(grid))
     vals = np.zeros(len(grid))
@@ -269,17 +266,12 @@ def regression(events, values, grid):
     if len(events) == 0:
         raise ValueError("Events and values are empty.")
 
-    events = np.array(events, dtype=np.double)
-    values = np.array(values, dtype=np.double)
+    events = np.asarray(events, dtype=np.double)
+    values = np.asarray(values, dtype=np.double)
 
-    # Cut out of bounds values
-    before_start = np.where(events < grid[0])
-    values = np.delete(values, before_start)
-    events = np.delete(events, before_start)
-
-    after_end = np.where(events > grid[-1])
-    values = np.delete(values, after_end)
-    events = np.delete(events, after_end)
+    mask = (grid[0] <= events) & (events <= grid[-1])
+    events = events[mask]
+    values = values[mask]
 
     if len(events) == 1:
         return np.ones(len(grid)) * values[0]
