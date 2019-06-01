@@ -69,13 +69,15 @@ class TestIntensity(unittest.TestCase):
         res = infer_intensity(np.array(self.events), self.grid)
         self.assertTrue((res >= 0).all())
 
-    # def test_events_are_cut_if_out_of_bounds(self):
-    #     events = [1937,1939,1945,1979,1986,2200,2026,2029,2189,2211,2213,2214]
-    #     grid = np.linspace(2000, 2200, num=4)
-    #     expected_events = [2200,2026,2029,2189]
-
-    #     fi = FastIntensity(events, grid)
-    #     npt.assert_array_equal(fi.events, expected_events)
+    def test_iteration_param(self):
+        # Iterations may be custom
+        infer_intensity(self.events, self.grid, iterations=1)
+        # Iteration count must be positive
+        with self.assertRaises(ValueError):
+            infer_intensity(self.events, self.grid, iterations=-1)
+        # Iteration count should be int
+        with self.assertRaises(TypeError):
+            infer_intensity(self.events, self.grid, iterations=1.5)
 
 
 class TestRegression(unittest.TestCase):
@@ -96,17 +98,6 @@ class TestRegression(unittest.TestCase):
                          self.grid)
         self.assertTrue(res.all())
 
-    # def test_events_and_values_are_cut_if_out_of_bounds(self):
-    #     events = [10, 50, 100, 150, 180, 200, 250, 320, 500]
-    #     values = [100, 110, 120, 130, 140, 150, 160, 170, 180]
-    #     expected_events = [100, 150, 180, 200, 250, 320]
-    #     expected_values = [120, 130, 140, 150, 160, 170]
-    #     grid = np.linspace(100, 400, num=6)
-
-    #     fr = FastRegression(events, values, grid)
-    #     npt.assert_array_equal(fr.events, expected_events)
-    #     npt.assert_array_equal(fr.values, expected_values)
-
     def test_raises_exception_on_events_values_diff_len(self):
         with self.assertRaises(ValueError):
             regression(self.events, [1,2], self.grid)
@@ -118,8 +109,3 @@ class TestRegression(unittest.TestCase):
     def test_constant_for_one_event_value(self):
         res = regression([200], [100], self.grid)
         self.assertTrue(np.all(res == 100))
-
-    # def test_has_one_grid_point_for_single_value_grid(self):
-    #     fr = FastRegression([200], [100], [200])
-    #     result = fr.run_inference()
-    #     npt.assert_array_equal(len(fr.grid), 1)

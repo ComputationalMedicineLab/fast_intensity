@@ -118,7 +118,7 @@ cdef double[:] update_mean(double[:] mean,
     return mean
 
 
-
+@cython.boundscheck(False)
 cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_count):
     """Compute the bin boundaries in (0-based) sequence index space.
 
@@ -150,31 +150,34 @@ cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_cou
     -------
     np.ndarray : Bin boundaries
     """
+    if num_bins == 1:
+        return np.array([0.0, num_events + 1])
     # The bin at each end must contain at least pad = min_count - 1 actual
     # events, because the endpoints count as an included event, even though the
     # intervals stop exactly at that event.
-    start = 0
-    end = num_events + 1
-    pad = min_count - 1
+    cdef int start = 0
+    cdef int end = num_events + 1
+    cdef int pad = min_count - 1
 
     boundaries = np.empty(num_bins + 1)
     boundaries[0] = start
     boundaries[-1] = end
-    if num_bins == 1:
-        return boundaries
 
     boundaries[1:-1] = np.arange(start=pad,
                                  stop=min_count * (num_bins - 1),
                                  step=min_count)
-    slop = np.random.uniform(low=0,
-                             high=end - pad - boundaries[-2],
-                             size=num_bins - 1)
-    slop.sort()
-    np.add(boundaries[1:-1], slop, out=boundaries[1:-1])
+    noise = np.random.uniform(low=0,
+                              high=end - pad - boundaries[-2],
+                              size=num_bins - 1)
+    noise.sort()
+    np.add(boundaries[1:-1], noise, out=boundaries[1:-1])
     return boundaries
 
 
-def infer_intensity(events, grid, iterations=100, min_count=3):
+def infer_intensity(events,
+                    grid,
+                    Py_ssize_t iterations = 100,
+                    int min_count = 3):
     """Estimates (potentially nonstationary) event intensity vs. time.
 
     This class uses Completely Random Average Shifted Histograms (CRASH) to
@@ -209,22 +212,31 @@ def infer_intensity(events, grid, iterations=100, min_count=3):
     events = np.asarray(events, dtype=np.double)
     events = events[(grid[0] <= events) & (events <= grid[-1])]
 
-    meanvals = np.zeros(len(grid))
-    vals = np.zeros(len(grid))
-    n = len(events) + 1
+    if iterations < 1:
+        raise ValueError('Iteration num must be positive')
 
-    # Compute event_indices once for all iterations of _get_boundaries, for
-    # efficiency. (This has a measurable effect on run time.)
-    event_indices = np.linspace(0, n, n + 1)
+    cdef Py_ssize_t n_evts = len(events)
+    cdef Py_ssize_t n_grid = len(grid)
+    cdef Py_ssize_t max_bins = (n_evts + 1) // min_count
+    cdef Py_ssize_t i = 0
+    cdef int num_bins = 0
 
-    events_w_endpoints = np.concatenate(([grid[0]], events, [grid[-1]]))
-    max_bins = int(event_indices[-1] // min_count)
+    cdef double[:] mean = np.zeros_like(grid)
+    cdef double[:] vals = np.zeros_like(grid)
+
+    # np.interpolate args xp and fp are precomputed for efficiency
+    cdef np.ndarray xp = np.arange(0, n_evts + 2)
+    # This is about 4-5x faster than using np.concatenate with lists
+    cdef np.ndarray fp = np.zeros(n_evts + 2)
+    fp[0] = grid[0]
+    fp[-1] = grid[-1]
+    fp[1:-1] = events
+
+    # Uninitialized declarations for loop body vars
+    cdef double[:] sequence_boundaries, boundaries, h
 
     for i in range(iterations):
-        if max_bins < 2:
-            num_bins = 1
-        else:
-            num_bins = np.random.randint(1, max_bins + 1)
+        num_bins = 1 if max_bins < 2 else np.random.randint(1, max_bins + 1)
         # Boundaries are sampled uniformly at random in sequence space, with the
         # constraint that all bins have at least min_count events in them
         # (with endpoints considered events). This means, that a boundary is
@@ -233,15 +245,13 @@ def infer_intensity(events, grid, iterations=100, min_count=3):
         # tends to give a smoothness to the final density estimation that varies
         # appropriately with the density of events.
         sequence_boundaries = get_sequence_boundaries(num_bins,
-                                                       num_events=len(events),
-                                                       min_count=min_count)
-        boundaries = np.interp(sequence_boundaries,
-                               event_indices,
-                               events_w_endpoints)
-        h = density_hist(events.astype(np.double), boundaries.astype(np.double))
+                                                      num_events=n_evts,
+                                                      min_count=min_count)
+        boundaries = np.interp(sequence_boundaries, xp, fp)
+        h = density_hist(events, boundaries)
         vals = stair_step(boundaries, h, grid, vals)
-        meanvals = update_mean(meanvals, vals, i+1)
-    return np.asarray(meanvals)
+        mean = update_mean(mean, vals, i+1)
+    return np.asarray(mean)
 
 
 def regression(events, values, grid):
