@@ -8,7 +8,6 @@ __pycache__
 
 # Profiler output / stats
 *.prof
-timings.txt
 # cython -a
 *.html
 

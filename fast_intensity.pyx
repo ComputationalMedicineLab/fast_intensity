@@ -10,49 +10,26 @@ from scipy.interpolate import pchip_interpolate
 ctypedef np.float_t DTYPE_t
 
 __version__ = '0.4.dev0'
-__all__ = ['fast_hist', 'stair_step', 'FastIntensity', 'FastRegression']
-
-
-class FastBase(object):
-    def __init__(self, grid):
-        """Initialize with parameters.
-
-        Args:
-            grid (array-like of reals): Evenly spaced time points at which to
-                compute the curve.
-        """
-        self.grid = grid
-
-    @property
-    def start(self):
-        return self.grid[0]
-
-    @property
-    def end(self):
-        return self.grid[-1]
-
-    @property
-    def resolution(self):
-        return self.grid[1] - self.grid[0]
-
-    def run_inference(self):
-        raise NotImplementedError
+__all__ = ['infer_intensity', 'regression']
 
 
 def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
-    """
-    Return density histogram.
+    """Density histogram.
 
     Calculates density of elements x in bins defined by edges. Assumes values
     and edges are sorted, and edges[0] < x < edges[-1]. Behavior for unsorted
     values is undefined.
 
-    Args:
-        x (np.array of np.float numbers): values
-        edges (np.array of np.float numbers): bin edges (2 or more values)
+    Arguments
+    ---------
+    x : double[:]
+        Sorted values
+    edges : double[:]
+        Bin edges
 
-    Returns:
-        np.array of density histogram (float)
+    Returns
+    -------
+    double[:] : the density histogram
     """
     cdef np.ndarray density = np.zeros(len(edges) - 1, dtype=np.float)
     cdef int n = len(x)
@@ -79,18 +56,24 @@ def fast_hist(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] edges):
 
 def stair_step(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] y,
                np.ndarray[DTYPE_t, ndim=1] xp, np.ndarray[DTYPE_t, ndim=1] yp):
-    """
-    Previous neighbor interpolation. Behavoir undefined for unsorted points.
+    """Previous neighbor interpolation.  Behavior undefined for unsorted points.
 
-    Args:
-        x (np.array of np.float numbers): sample points, sorted.
-        y (np.array of np.float numbers): sample values (same size as x)
-        xp (np.array of np.float numbers): query points
-        yp (np.array of np.float numbers): preallocated list or np.array for
-            query values (same size as xp)
+    Operates in-place on argument `yp`. Behavior undefined for unsorted points.
 
-    Returns:
-        np.array of interpolated values (float)
+    Arguments
+    ---------
+    x : double[:]
+        Sorted sample points
+    y : double[:]
+        Sample values (same size as x)
+    xp : double[:]
+        Query points
+    yp : double[:]
+        Preallocated buffer or np.array for query values (same size as xp)
+
+    Returns
+    -------
+    double[:] : yp, augmented in-place
     """
     cdef int n = xp.shape[0]
     cdef int m = y.shape[0]
@@ -110,7 +93,7 @@ def stair_step(np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] y,
     return yp
 
 
-class FastIntensity(FastBase):
+def infer_intensity(events, grid, iterations=100, min_count=3):
     """Estimates (potentially nonstationary) event intensity vs. time.
 
     This class uses Completely Random Average Shifted Histograms (CRASH) to
@@ -127,106 +110,69 @@ class FastIntensity(FastBase):
     density peaks from forming pathologically around each event and at
     endpoints.
 
-    Attributes:
-        events (array-like of sorted real numbers): event times
-        grid (np.array of sorted real numbers): timepoints at which the
-            intensity curve is computed
-        min_count: The minimum number of points per bin.
+    Arguments
+    ---------
+    events : np.ndarray[np.double_t, ndim=1]
+        Sorted event times
+    grid : np.ndarray[np.double_t, ndim=1]
+        Timepoints at which the intensity curve is computed
+    iterations : int
+        The number of histograms to compute
+    min_count : int
+        The minimum number of points per bin
 
-    Usage:
-        events = [10, 15, 16, 17, 28]
-        grid = np.arange(0, 50, 1)
-
-        fi = FastIntensity(events, grid=grid)
-        intensity = fi.run_inference()
+    Returns
+    -------
+    np.ndarray[np.double_t, ndim=1] : Inferred intensity curve
     """
+    before_start = np.where(events < grid[0])
+    events = np.delete(events, before_start)
 
-    def __init__(self, events, grid, iterations=100, min_count=3):
-        """
-        Initialize with events and inference parameters.
+    after_end = np.where(events > grid[-1])
+    events = np.delete(events, after_end)
 
-        Args:
-            events (array-like of sorted reals): event times
-            grid (array-like of sorted reals): time points at which to
-                compute the intensity curve.
-            iterations: number of inference iterations (default 100).
-            min_count: The minimum number of events per bin (default 3).
-        """
-        # Cut out of bounds values
-        before_start = np.where(events < grid[0])
-        events = np.delete(events, before_start)
+    meanvals = np.zeros(len(grid))
+    vals = np.zeros(len(grid), dtype=np.float)
+    n = len(events) + 1
 
-        after_end = np.where(events > grid[-1])
-        events = np.delete(events, after_end)
+    # Compute event_indices once for all iterations of _get_boundaries, for
+    # efficiency. (This has a measurable effect on run time.)
+    event_indices = np.linspace(0, n, n + 1)
 
-        self.events = events
-        self.grid = grid
-        self.iterations = iterations
+    events_w_endpoints = np.concatenate(([grid[0]], events, [grid[-1]]))
+    max_bins = int(event_indices[-1] // min_count)
 
-    def run_inference(self):
-        """Run event intensity inference.
+    for i in range(iterations):
+        if max_bins < 2:
+            num_bins = 1
+        else:
+            # randint high value is exclusive
+            num_bins = npr.randint(1, max_bins + 1)
 
-        Returns:
-            np.array of event intensity, calculated at times defined by
-              self.grid, with units of events per time.
-        """
-        meanvals = np.zeros(len(self.grid))
-        vals = np.zeros(len(self.grid), dtype=np.float)
-        n = len(self.events) + 1
-        min_count = 3
 
-        # Compute event_indices once for all iterations of _get_boundaries, for
-        # efficiency. (This has a measurable effect on run time.)
-        self.event_indices = np.linspace(0, n, n + 1)
+        # Boundaries are sampled uniformly at random in sequence space, with the
+        # constraint that all bins have at least min_count events in them
+        # (with endpoints considered events). This means, that a boundary is
+        # equally likely to occur between any two events, regardless of the
+        # spacing of those events, so long as min_count is respected. This
+        # tends to give a smoothness to the final density estimation that varies
+        # appropriately with the density of events.
+        sequence_boundaries = _get_sequence_boundaries(num_bins,
+                                                       num_events=len(events),
+                                                       min_count=min_count)
+        boundaries = np.interp(sequence_boundaries,
+                               event_indices,
+                               events_w_endpoints)
 
-        self._events_w_endpoints = np.concatenate(([self.start], self.events,
-                                                   [self.end]))
-        max_bins = int(self.event_indices[-1] // min_count)
+        # fast_hist expects arrays of floats; in some scenarios events may
+        # be an array of longs.  We explicitly cast here to avoid a buffer
+        # data type mismatch
+        h = fast_hist(events.astype(np.float),
+                        boundaries.astype(np.float))
+        vals = stair_step(boundaries, h, grid, vals)
+        meanvals = meanvals + (vals - meanvals) / (i + 1)
 
-        for i in range(self.iterations):
-            if max_bins < 2:
-                num_bins = 1
-            else:
-                # randint high value is exclusive
-                num_bins = npr.randint(1, max_bins + 1)
-
-            boundaries = self._get_boundaries(num_bins, min_count)
-            # fast_hist expects arrays of floats; in some scenarios events may
-            # be an array of longs.  We explicitly cast here to avoid a buffer
-            # data type mismatch
-            h = fast_hist(self.events.astype(np.float),
-                          boundaries.astype(np.float))
-            vals = stair_step(boundaries, h, self.grid, vals)
-            meanvals = meanvals + (vals - meanvals) / (i + 1)
-
-        return meanvals
-
-    def _get_boundaries(self, num_bins, min_count):
-        """Compute random bin boundaries for histogram, respecting min_count.
-
-        Boundaries are sampled uniformly at random in sequence space, with the
-        constraint that all bins have at least min_count events in them
-        (with endpoints considered events). This means, that a boundary is
-        equally likely to occur between any two events, regardless of the
-        spacing of those events, so long as min_count is respected. This
-        tends to give a smoothness to the final density estimation that varies
-        appropriately with the density of events.
-
-        Args:
-            num_bins: The number of bins to be defined by the boundaries.
-            min_count: The minimum number of events (including
-              endpoints) to be present in any bin.
-
-        Returns:
-            np.array of new bin boundaries
-        """
-        sequence_boundaries = _get_sequence_boundaries(
-            num_bins, num_events=len(self.events), min_count=min_count)
-
-        data_boundaries = np.interp(
-            sequence_boundaries, self.event_indices, self._events_w_endpoints)
-
-        return data_boundaries
+    return meanvals
 
 
 def _get_sequence_boundaries(num_bins, num_events, min_count=3):
@@ -243,17 +189,22 @@ def _get_sequence_boundaries(num_bins, num_events, min_count=3):
     num_events > 0. Inconsistent combinations as defined below result in
     undefined behavior.
 
-    Args:
-        num_bins: The number of bins to be defined by the boundaries. Must
-          satisfy num_bins <= ((num_events + 2) / min_count) or undefined
-          behavior results.
-        num_events: The positive number of events to be binned (not counting
-          the overall start and end boundaries as events). Must be positive
-          (and nonzero) or underfine behavior results.
-        min_count: The minimum number of indices between boundaries.
+    Arguments
+    ---------
+    n_bins : int
+        The number of bins to be defined by the boundaries. Must satisfy
+        n_bins <= ((n_events + 2) / min_count) or undefined behavior
+        results.
+    n_events : int
+        The positive number of events to be binned (not counting the overall
+        start and end boundaries as events). Must be positive (and nonzero) or
+        undefined behavior results.
+    min_count : int
+        The minimum number of indices between boundaries.
 
-    Returns:
-       np.array of bin boundaries.
+    Returns
+    -------
+    np.ndarray : Bin boundaries
     """
 
     # The bin at each end must contain at least pad = min_count - 1 actual
@@ -278,80 +229,42 @@ def _get_sequence_boundaries(num_bins, num_events, min_count=3):
     return boundaries
 
 
-class FastRegression(FastBase):
+def regression(events, values, grid):
     """Estimates values over time.
 
-    Attributes:
-        events (array-like of real numbers): event times in units of days
-            since an arbitrary reference point
-        values (array-like of real numbers): values for each event time
-        start (number): beginning of the computed inference time range
-        end (number): end of the computed inference time range
-        grid (np.array of real numbers): evenly spaced timepoints at which the
-            curve is computed
+    Arguments
+    ---------
+    events : np.ndarray[np.double_t, ndim=1]
+        Event times in units of days since an arbitrary reference point
+    values : np.ndarray[np.double_t, ndim=1]
+        Values for each event time
+    grid : np.ndarray[np.double_t, ndim=1]
+        Evenly spaced timepoints at which the curve is computed
 
-    Usage:
-        events = [10, 15, 16, 17, 28]
-        values = [120, 128, 119, 148, 144]
-        grid = np.arange(0, 50, 1)
-
-        fr = FastRegression(events, values, grid)
-        regression = fr.run_inference()
+    Returns
+    -------
+    array-like of reals : the computed regression curve
     """
+    if len(events) != len(values):
+        raise ValueError("Events and values are different lengths.")
 
-    def __init__(self, events, values, grid):
-        """
-        Initialize with events and corresponding values.
+    if len(events) == 0:
+        raise ValueError("Events and values are empty.")
 
-        Args:
-            events (array-like of real numbers): event times in units of days
-                since an arbitrary reference point
-            values (array-like of real numbers): values for corresponding event
-                times, must be same the length as events
-            grid (array-like of reals): Evenly spaced time points at which to
-                compute the curve.
-        """
-        if len(events) != len(values):
-            raise ValueError("Events and values are different lengths.")
+    events = np.array(events, dtype=np.float)
+    values = np.array(values, dtype=np.float)
 
-        if len(events) == 0:
-            raise ValueError("Events and values are empty.")
+    # Cut out of bounds values
+    before_start = np.where(events < grid[0])
+    values = np.delete(values, before_start)
+    events = np.delete(events, before_start)
 
-        events = np.array(events, dtype=np.float)
-        values = np.array(values, dtype=np.float)
+    after_end = np.where(events > grid[-1])
+    values = np.delete(values, after_end)
+    events = np.delete(events, after_end)
 
-        # Cut out of bounds values
-        before_start = np.where(events < grid[0])
-        values = np.delete(values, before_start)
-        events = np.delete(events, before_start)
-
-        after_end = np.where(events > grid[-1])
-        values = np.delete(values, after_end)
-        events = np.delete(events, after_end)
-
-        self.events = events
-        self.values = values
-        self.grid = grid
-
-    def run_inference(self):
-        """
-        Run regression inference.
-
-        Returns
-            np.array
-        """
-        if len(self.events) == 1:
-            return np.ones(len(self.grid)) * self.values[0]
-
-        return _pchip_with_const_extrapolation(self.events,
-                                               self.values,
-                                               self.grid)
-
-
-def _pchip_with_const_extrapolation(events, values, grid):
-    """
-    Interpolates between readings, extrapolates based on boundry values.
-    """
+    if len(events) == 1:
+        return np.ones(len(grid)) * values[0]
 
     if len(grid) > 1:
         f_event, f_value = ([grid[0]], [values[0]]
