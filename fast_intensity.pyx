@@ -4,21 +4,10 @@ cimport numpy as np
 import numpy.random as npr
 from scipy.interpolate import pchip_interpolate
 
-DTYPE = np.float
 ctypedef np.float_t DTYPE_t
 
-
-__version__ = '0.3'
-__version_info__ = tuple(__version__.split('.'))
-
-__author__ = 'Thomas A. Lasko, Jacek Bajor, John M Still'
-__maintainer__ = 'John M Still'
-__maintainer_email__ = 'john.m.still@vumc.org'
-
-__all__ = ['fast_hist',
-           'stair_step',
-           'FastIntensity',
-           'FastRegression']
+__version__ = '0.4.dev0'
+__all__ = ['fast_hist', 'stair_step', 'FastIntensity', 'FastRegression']
 
 
 class FastBase(object):

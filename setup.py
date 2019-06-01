@@ -31,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering :: Information Analysis',
     ],
-    version='0.3',
+    version='0.4.dev0',
     author='Thomas A. Lasko, Jacek Bajor, John M Still',
     maintainer='John M Still',
     maintainer_email='john.m.still@vumc.org',
