@@ -9,3 +9,7 @@ After (more) fully Cythonizing density_hist and stair_step
 After extracting update_mean to a C loop
 3.03 ms ± 45.6 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 14.5 ms ± 149 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+Most things are now C typed
+2.1 ms ± 49.8 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+13.1 ms ± 161 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)

@@ -119,6 +119,7 @@ cdef double[:] update_mean(double[:] mean,
 
 
 @cython.boundscheck(False)
+@cython.wraparound(False)
 cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_count):
     """Compute the bin boundaries in (0-based) sequence index space.
 
@@ -152,26 +153,32 @@ cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_cou
     """
     if num_bins == 1:
         return np.array([0.0, num_events + 1])
-    # The bin at each end must contain at least pad = min_count - 1 actual
-    # events, because the endpoints count as an included event, even though the
-    # intervals stop exactly at that event.
-    cdef int start = 0
-    cdef int end = num_events + 1
-    cdef int pad = min_count - 1
 
-    boundaries = np.empty(num_bins + 1)
-    boundaries[0] = start
-    boundaries[-1] = end
+    # The formula here is a simplification of how to get the top end of our
+    # noise distribution, which is basically:
+    #       end - pad - max(base)
+    # Where
+    #       end = num_events + 1
+    #       pad = min_count - 1
+    # and
+    #       max(base) == pad + (min_count * (num_bins - 2))
+    # for
+    #       base = np.arange(pad, min_count * (num_bins - 1), min_count)
+    cdef float high = 3 + num_events - (min_count * num_bins)
+    cdef Py_ssize_t N = num_bins - 1
+    cdef double[:] inner = np.sort(np.random.uniform(low=0, high=high, size=N))
 
-    boundaries[1:-1] = np.arange(start=pad,
-                                 stop=min_count * (num_bins - 1),
-                                 step=min_count)
-    noise = np.random.uniform(low=0,
-                              high=end - pad - boundaries[-2],
-                              size=num_bins - 1)
-    noise.sort()
-    np.add(boundaries[1:-1], noise, out=boundaries[1:-1])
-    return boundaries
+    cdef Py_ssize_t i = 0
+    cdef long j = min_count - 1
+    for i in range(N):
+        inner[i] += j
+        j += min_count
+
+    cdef double[:] bounds = np.zeros(num_bins + 1)
+    bounds[0] = 0.0
+    bounds[num_bins] = num_events + 1
+    bounds[1:num_bins] = inner
+    return bounds
 
 
 def infer_intensity(events,
