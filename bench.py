@@ -23,8 +23,8 @@ if __name__ == '__main__':
     #stmt = 'fast_regression(events, values, grid)'
     #reg_result = ipython.run_cell_magic('timeit', '-o', stmt)
 
-    setup = 'fi = FastIntensity(evts, grid)'
-    stmt = 'fi.run_inference()'
+    setup = '-o'
+    stmt = 'infer_intensity(evts, grid)'
 
     inf_sample = numpy.load('intensity.npz')
     evts = inf_sample['events']
