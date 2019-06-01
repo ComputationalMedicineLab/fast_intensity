@@ -1,0 +1,14 @@
+import numpy
+from setuptools import setup, Extension
+
+# Requires actual GCC for openMP, not OS X's gcc symlink to clang. If
+# developing on OS X, brew install GCC and symlink it into your path ahead of
+# clang.
+def make_ext(modname, pyxfilename):
+    return Extension('fast_intensity',
+                     ['fast_intensity.pyx'],
+                     extra_compile_args=['-fopenmp'],
+                     extra_link_args=['-fopenmp'],
+                     include_dirs=[numpy.get_include()])
+
+# vim: ft=python

@@ -1,4 +1,7 @@
+# Compiler directives have to come before code, but may come after comments
+# cython: language_level=3
 """Fast intensity inference"""
+
 import numpy as np
 cimport numpy as np
 import numpy.random as npr

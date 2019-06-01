@@ -9,7 +9,7 @@ clean-dist:
 	rm -rf build/ dist/ wheelhouse/ fast_intensity.egg-info/ .eggs/
 
 test:
-	./run_tests.py
+	./run_tests.py -vv
 
 bench:
 	./bench.py

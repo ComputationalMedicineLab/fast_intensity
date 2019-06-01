@@ -1,11 +1,8 @@
-"""Fast intensity unit tests"""
+# cython: language_level=3
 import unittest
 
 import numpy as np
 import numpy.testing as npt
-
-import pyximport
-pyximport.install(setup_args={"include_dirs": np.get_include()})
 from fast_intensity import *
 
 

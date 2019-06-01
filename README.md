@@ -42,23 +42,24 @@ Usage
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime as dt
+import pyximport
+
+pyximport.install(language_level=3)
 from fast_intensity import FastIntensity
 
 np.random.seed(42)
 
 # Specify a series of 100 events spread over a year
-days = np.arange(0, 365)
+days = np.arange(0.0, 365)
 np.random.shuffle(days)
-events = sorted(days[:100])
+events = np.sort(days[:100])
 
 # Specify times (as reals) where we want to calculate the intensity of event occurrence
 grid = np.linspace(1, 365, num=12)
 
-# Configure a FastIntensity instance with the events and the grid
-curve_builder = FastIntensity(events, grid)
-
 # Generate the intensity curve - the unit is events per time unit
-intensity = curve_builder.run_inference()
+fi = FastIntensity(events, grid)
+intensity = fi.run_inference()
 print(intensity)
 #     array([0.38953   , 0.27764734, 0.33549508, 0.27285165, 0.22284481,
 #            0.16997545, 0.26651725, 0.23580527, 0.23351076, 0.25272662,
