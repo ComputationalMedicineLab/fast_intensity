@@ -99,6 +99,26 @@ cdef double[:] stair_step(double[:] x,
     return yp
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef double[:] update_mean(double[:] mean,
+                           double[:] vals,
+                           Py_ssize_t loop_iter):
+    cdef Py_ssize_t N = mean.shape[0]
+    cdef Py_ssize_t i = 0
+    cdef double m = 0.0
+    cdef double v = 0.0
+    cdef double x = 0.0
+    for i in range(N):
+        m = mean[i]
+        v = vals[i]
+        x = m + ((v - m) / loop_iter)
+        mean[i] = x
+    return mean
+
+
+
 cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_count):
     """Compute the bin boundaries in (0-based) sequence index space.
 
@@ -223,9 +243,8 @@ def infer_intensity(events, grid, iterations=100, min_count=3):
                                events_w_endpoints)
         h = density_hist(events.astype(np.double), boundaries.astype(np.double))
         vals = stair_step(boundaries, h, grid, vals)
-        meanvals = meanvals + (vals - meanvals) / (i + 1)
-
-    return meanvals
+        meanvals = update_mean(meanvals, vals, i+1)
+    return np.asarray(meanvals)
 
 
 def regression(events, values, grid):
