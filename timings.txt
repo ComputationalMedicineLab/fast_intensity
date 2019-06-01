@@ -1,4 +1,7 @@
-Baseline timings as of moving from class to functional version:
-
+Baseline timings after moving from class to functional version:
 3.65 ms ± 57.3 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 23 ms ± 2.3 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+Timings after fully Cythonizing density_hist and stair_step
+3.67 ms ± 50.7 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+15.6 ms ± 134 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)

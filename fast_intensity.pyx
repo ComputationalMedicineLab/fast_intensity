@@ -5,11 +5,15 @@ import numpy as np
 from scipy.interpolate import pchip_interpolate
 
 cimport numpy as np
+cimport cython
 
 __version__ = '0.4.dev0'
 __all__ = ['infer_intensity', 'regression']
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cdef double[:] density_hist(double[:] x, double[:] edges):
     """Density histogram.
 
@@ -28,11 +32,12 @@ cdef double[:] density_hist(double[:] x, double[:] edges):
     -------
     double[:] : the density histogram
     """
-    cdef double[:] density = np.zeros(len(edges) - 1)
-    cdef int n = len(x)
-    cdef int i = 0
-    cdef int j = 1
-    cdef int start = i
+    cdef double[:] density = np.zeros(edges.shape[0] - 1)
+    cdef Py_ssize_t n = x.shape[0]
+    cdef Py_ssize_t i = 0
+    cdef Py_ssize_t j = 1
+    cdef Py_ssize_t start = i
+    cdef double dist
 
     while i < n:
         start = i
@@ -43,14 +48,16 @@ cdef double[:] density_hist(double[:] x, double[:] edges):
         while i < n and x[i] <= edges[j]:
             i = i + 1
 
-        edges_distance = (edges[j] - edges[j - 1])
+        dist = (edges[j] - edges[j - 1])
 
-        if edges_distance != 0:
-            density[j-1] = (i - start) / edges_distance
+        if dist != 0.0:
+            density[j-1] = (i - start) / dist
 
     return density
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef double[:] stair_step(double[:] x,
                           double[:] y,
                           double[:] xp,
@@ -74,10 +81,10 @@ cdef double[:] stair_step(double[:] x,
     -------
     double[:] : yp, augmented in-place
     """
-    cdef int n = len(xp)
-    cdef int m = len(y)
-    cdef int j = 0
-    cdef int i = 0
+    cdef Py_ssize_t n = xp.shape[0]
+    cdef Py_ssize_t m = y.shape[0]
+    cdef Py_ssize_t j = 0
+    cdef Py_ssize_t i = 0
 
     while j < n and xp[j] < x[i]:
         yp[j] = 0
