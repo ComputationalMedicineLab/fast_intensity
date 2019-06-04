@@ -5,10 +5,12 @@ from setuptools import setup, Extension
 # developing on OS X, brew install GCC and symlink it into your path ahead of
 # clang.
 def make_ext(modname, pyxfilename):
-    return Extension('fast_intensity',
-                     ['fast_intensity.pyx'],
-                     extra_compile_args=['-fopenmp'],
-                     extra_link_args=['-fopenmp'],
-                     include_dirs=[numpy.get_include()])
+    return Extension(
+        'fast_intensity',
+        ['fast_intensity.pyx'],
+        #extra_compile_args=['-fopenmp', '-O3', '-march=native'],
+        #extra_link_args=['-fopenmp'],
+        include_dirs=[numpy.get_include()],
+    )
 
 # vim: ft=python
