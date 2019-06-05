@@ -1,15 +1,21 @@
 fast-intensity
 ===============================
 
-authors: Thomas A. Lasko, Jacek Bajor
+authors: Thomas A. Lasko, Jacek Bajor, John Still
+
 
 Overview
 --------
-
 Fast density inference. Generates intensity curves from given events.
+
 
 Installation
 ------------
+We only support Python 3 and above.  We recommend using `fast_intensity` in a
+[virtual environment](https://docs.python.org/3/tutorial/venv.html); however,
+if you choose to install to a system-wide version of Python, be aware that some
+distributions will alias Python 3's `pip` as `pip3`.  You should be able to
+verify which Python `pip` is associated with by running `pip --version`.
 
 If you prefer to install a precompiled binary, we provide wheels for OS X and
 Linux (via the [manylinux](https://github.com/pypa/manylinux) project).  The
@@ -18,9 +24,9 @@ basic pip install command line
     $ pip install fast-intensity
 
 should prefer one of our prebuilt binaries. Installation from source requires
-an environment with Cython and numpy preinstalled.  
+an environment with Cython, numpy, and scipy preinstalled.
 
-    $ pip install cython numpy
+    $ pip install cython numpy scipy
 
 Then you may install a release from source by specifying _not_ to use a binary:
 
@@ -36,7 +42,6 @@ install the bleeding edge version:
 
 Usage
 -----
-
 ```python
 %matplotlib inline
 %load_ext cython
