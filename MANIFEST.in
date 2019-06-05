@@ -2,3 +2,6 @@ include README.md
 include LICENSE.txt
 include requirements.txt
 include intensity_figure.png
+include fast_intensity.pyx
+include fast_intensity.pxd
+include fast_intensity.pyxbld
