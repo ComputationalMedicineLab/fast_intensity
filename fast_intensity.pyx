@@ -7,7 +7,7 @@ from scipy.interpolate import pchip_interpolate
 cimport numpy as np
 cimport cython
 
-__version__ = '0.4.dev0'
+__version__ = '0.4'
 __all__ = ['infer_intensity', 'regression']
 
 
