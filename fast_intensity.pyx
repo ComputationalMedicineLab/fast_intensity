@@ -58,34 +58,59 @@ cdef double[:] density_hist(double[:] x, double[:] edges):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double[:] stair_step(double[:] x,
-                          double[:] y,
-                          double[:] xp,
-                          double[:] yp):
-    """Previous neighbor interpolation.  Behavior undefined for unsorted points.
+cdef double[:] map_histogram(double[:] x,
+                             double[:] y,
+                             double[:] xp,
+                             double[:] yp):
+    """Map histogram from source (`x`,`y`) to target(`xp`, `yp`). Overwrites `yp`.
 
-    Operates in-place on argument `yp`. Behavior undefined for unsorted points.
+    Uses previous-neighbor interpolation. `x` and `xp` are the edges of the
+    histogram bins, and `y` are the values of the source histogram bins. `yp`
+    gets filled with the mapped values.
+
+    This is used to map a source histogram with variable bin sizes onto a
+    target histogram with regular bin sizes. The value `yp[i]` gets the value
+    of `y[j]` where `x[i]` is the closest previous point to `xp[j]`. So a large
+    bin in the source histogram gets chopped up into a sequence of smaller bins
+    in the target histogram, with the all of the target bin values set to the
+    source bin value. This works because the bin values represent densities.
+
+    Assumptions:
+    * xp[0] == x[0]
+    * xp[-1] == x[-1]
+    * len(y) == len(x) -1
+    * len(yp) == len(xp) -1
+    * The values in xp are spaced at least as close as any values of x.
+    * `x` and `xp` are sorted.
+
+    For efficiency, these assumptions are not checked. Behavior is undefined if
+    they are violated.
+
+Operates in-place on `yp`.
 
     Arguments
     ---------
     x : double[:]
-        Sorted sample points
+        Bin edges of source histogram.
     y : double[:]
-        Sample values (same size as x)
+        Bin values of source histogram.
     xp : double[:]
-        Query points
+        Bin edges of target histogram.
     yp : double[:]
-        Preallocated buffer or np.array for query values (same size as xp)
+        Bin values of target histogram (preallocated, gets overwritten).
 
     Returns
     -------
-    double[:] : yp, augmented in-place
+    double[:] : yp, filled in-place
     """
-    cdef Py_ssize_t n = xp.shape[0]
+    
+    cdef Py_ssize_t n = yp.shape[0]
     cdef Py_ssize_t m = y.shape[0]
     cdef Py_ssize_t j = 0
     cdef Py_ssize_t i = 0
 
+    # TODO: If xp[0] == x[0], this should never run. Delete and check that
+    # nothing breaks
     while j < n and xp[j] < x[i]:
         yp[j] = 0
         j += 1
@@ -195,7 +220,7 @@ def infer_intensity(events,
     location of each bin edge sampled uniformly at random between event
     *indices* (not their locations). For example, with the sequence of events
     [1, 2, 3, 100], there is the same probability that an edge will appear
-    between 3 and 3 as between 3 and 100.  This allows for the final density
+    between 2 and 3 as between 3 and 100.  This allows for the final density
     estimation to adapt its bandwidth to the nonstationarity of event
     locations. A constraint on the minimum number of events per bin keeps
     density peaks from forming pathologically around each event and at
@@ -228,8 +253,8 @@ def infer_intensity(events,
     cdef Py_ssize_t i = 0
     cdef int num_bins = 0
 
-    cdef double[:] mean = np.zeros_like(grid)
-    cdef double[:] vals = np.zeros_like(grid)
+    cdef double[:] mean = np.zeros(n_grid - 1)
+    cdef double[:] vals = np.empty(n_grid - 1)
 
     # np.interpolate args xp and fp are precomputed for efficiency
     cdef np.ndarray xp = np.arange(0, n_evts + 2)
@@ -256,7 +281,13 @@ def infer_intensity(events,
                                                       min_count=min_count)
         boundaries = np.interp(sequence_boundaries, xp, fp)
         h = density_hist(events, boundaries)
-        vals = stair_step(boundaries, h, grid, vals)
+        # TODO: Fix the fact that if the resolution of `grid` is larger than
+        # the minimum spacing between events (1 day, the way we use it), then
+        # the mapping can fail because there may be two elements of
+        # `boundaries` that fall between the same two grid points, which will
+        # mess up the mapping. The fix might be to match the elements of
+        # `boundaries` to the nearest `grid` element.
+        vals = map_histogram(boundaries, h, grid, vals)
         mean = update_mean(mean, vals, i+1)
     return np.asarray(mean)
 
