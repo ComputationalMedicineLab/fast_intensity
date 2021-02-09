@@ -86,7 +86,7 @@ cdef double[:] map_histogram(double[:] x,
     For efficiency, these assumptions are not checked. Behavior is undefined if
     they are violated.
 
-Operates in-place on `yp`.
+    Operates in-place on `yp`.
 
     Arguments
     ---------
@@ -103,7 +103,6 @@ Operates in-place on `yp`.
     -------
     double[:] : yp, filled in-place
     """
-    
     cdef Py_ssize_t n = yp.shape[0]
     cdef Py_ssize_t m = y.shape[0]
     cdef Py_ssize_t j = 0
