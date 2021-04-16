@@ -4,5 +4,5 @@
 # cython: language_level=3
 
 cdef double[:] density_hist(double[:] x, double[:] edges)
-cdef double[:] stair_step(double[:] x, double[:] y, double[:] xp, double[:] yp)
+cdef double[:] map_histogram(double[:] x, double[:] y, double[:] xp, double[:] yp)
 cdef double[:] get_sequence_boundaries(int num_bins, int num_events, int min_count)
